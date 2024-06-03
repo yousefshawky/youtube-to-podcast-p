@@ -1,5 +1,5 @@
 import os
-import json
+import requests
 import certifi
 import ssl
 import urllib.request
@@ -39,7 +39,39 @@ s3 = boto3.client(
 
 def upload_to_s3(file_path, bucket_name, s3_key):
     s3.upload_file(file_path, bucket_name, s3_key)
-    return f'https://{bucket_name}.s3.amazonaws.com/{s3_key}'
+    s3_url = f'https://{bucket_name}.s3.amazonaws.com/{s3_key}'
+    return s3_url
+
+def is_url_accessible(url):
+    try:
+        response = requests.head(url)
+        return response.status_code == 200
+    except requests.RequestException:
+        return False
+
+def upload_to_buzzsprout(title, description, file_url):
+    if not is_url_accessible(file_url):
+        print(f"Failed to upload episode '{title}' to Buzzsprout: URL not accessible")
+        return
+
+    api_key = os.getenv('BUZZSPROUT_API_KEY')
+    podcast_id = os.getenv('BUZZSPROUT_PODCAST_ID')
+    url = f'https://www.buzzsprout.com/api/{podcast_id}/episodes'
+    headers = {
+        'Authorization': f'Token token={api_key}',
+        'Content-Type': 'application/json'
+    }
+    data = {
+        'title': title,
+        'description': description,
+        'audio_url': file_url
+    }
+    response = requests.post(url, headers=headers, json=data)
+    if response.status_code == 201:
+        print(f"Episode '{title}' uploaded successfully to Buzzsprout.")
+    else:
+        print(f"Failed to upload episode '{title}' to Buzzsprout: {response.content}")
+        print(f"Audio URL: {file_url}")
 
 def get_channel_videos(channel_id, api_key):
     youtube = build('youtube', 'v3', developerKey=api_key)
@@ -54,13 +86,29 @@ def get_channel_videos(channel_id, api_key):
     return video_urls
 
 def download_video(url, download_path):
-    yt = YouTube(url)  # Remove the ssl_context argument
+    yt = YouTube(url)
     stream = yt.streams.filter(progressive=True, file_extension='mp4').first()
     output_file = stream.download(output_path=download_path)
     output_mp3 = output_file.replace('.mp4', '.mp3')
     ffmpeg.input(output_file).output(output_mp3).run()
     os.remove(output_file)
     return output_mp3
+
+def get_mp3_files_metadata(download_path):
+    episodes = []
+    for file in os.listdir(download_path):
+        if file.endswith(".mp3"):
+            file_path = os.path.join(download_path, file)
+            file_size = os.path.getsize(file_path)
+            pub_date = datetime.now(pytz.utc).strftime("%a, %d %b %Y %H:%M:%S +0000")
+            episodes.append({
+                'title': file.replace('.mp3', ''),
+                'description': f"Episode from {file.replace('.mp3', '')}",
+                'pubDate': pub_date,
+                'url': upload_to_s3(file_path, os.getenv('AWS_BUCKET_NAME'), f"podcast/{file}"),
+                'length': file_size
+            })
+    return episodes
 
 def generate_rss_feed(channel_name, episodes, output_path):
     rss_feed = f"""<?xml version="1.0" encoding="UTF-8"?>
@@ -87,22 +135,6 @@ def generate_rss_feed(channel_name, episodes, output_path):
     with open(output_path, 'w', encoding='utf-8') as f:
         f.write(rss_feed)
 
-def get_mp3_files_metadata(download_path):
-    episodes = []
-    for file in os.listdir(download_path):
-        if file.endswith(".mp3"):
-            file_path = os.path.join(download_path, file)
-            file_size = os.path.getsize(file_path)
-            pub_date = datetime.now(pytz.utc).strftime("%a, %d %b %Y %H:%M:%S +0000")
-            episodes.append({
-                'title': file.replace('.mp3', ''),
-                'description': f"Episode from {file.replace('.mp3', '')}",
-                'pubDate': pub_date,
-                'url': upload_to_s3(file_path, os.getenv('AWS_BUCKET_NAME'), f"podcast/{file}"),
-                'length': file_size
-            })
-    return episodes
-
 @app.task
 def download_channel_podcast(channel_url):
     try:
@@ -120,7 +152,10 @@ def download_channel_podcast(channel_url):
 
         for video_url in video_urls:
             try:
-                download_video(video_url, download_path)
+                mp3_file = download_video(video_url, download_path)
+                file_metadata = get_mp3_files_metadata(download_path)[0]  # Get metadata for the newly downloaded file
+                s3_url = upload_to_s3(mp3_file, os.getenv('AWS_BUCKET_NAME'), f"{channel_id}/{os.path.basename(mp3_file)}")
+                upload_to_buzzsprout(file_metadata['title'], file_metadata['description'], s3_url)
             except Exception as e:
                 print(f"Failed to download video {video_url}: {e}")
 
