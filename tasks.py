@@ -19,6 +19,7 @@ app = Celery('tasks', broker='redis://localhost:6379/0')
 # SSL context for requests
 ssl_context = ssl.create_default_context(cafile=certifi.where())
 
+
 # Custom get function for pytube
 def custom_get(url, headers=None, timeout=None):
     if headers is None:
@@ -26,6 +27,7 @@ def custom_get(url, headers=None, timeout=None):
     req = urllib.request.Request(url, headers=headers)
     with urllib.request.urlopen(req, context=ssl_context, timeout=timeout) as response:
         return response.read().decode('utf-8')
+
 
 # Patch pytube's request handling
 request.get = custom_get
@@ -37,17 +39,24 @@ s3 = boto3.client(
     aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY')
 )
 
+
 def upload_to_s3(file_path, bucket_name, s3_key):
     s3.upload_file(file_path, bucket_name, s3_key)
     s3_url = f'https://{bucket_name}.s3.amazonaws.com/{s3_key}'
+    print(f"Uploaded to S3: {s3_url}")  # Debug statement
     return s3_url
+
 
 def is_url_accessible(url):
     try:
         response = requests.head(url)
-        return response.status_code == 200
-    except requests.RequestException:
+        accessible = response.status_code == 200
+        print(f"URL accessible: {url}, Status: {response.status_code}, Accessible: {accessible}")  # Debug statement
+        return accessible
+    except requests.RequestException as e:
+        print(f"URL check failed for {url}: {e}")  # Debug statement
         return False
+
 
 def upload_to_buzzsprout(title, description, file_url):
     if not is_url_accessible(file_url):
@@ -59,19 +68,32 @@ def upload_to_buzzsprout(title, description, file_url):
     url = f'https://www.buzzsprout.com/api/{podcast_id}/episodes'
     headers = {
         'Authorization': f'Token token={api_key}',
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'User-Agent': 'YT-Podcast 1.0 (Contact: yousef.shawky22@gmail..com)'
     }
     data = {
         'title': title,
         'description': description,
         'audio_url': file_url
     }
-    response = requests.post(url, headers=headers, json=data)
-    if response.status_code == 201:
-        print(f"Episode '{title}' uploaded successfully to Buzzsprout.")
-    else:
-        print(f"Failed to upload episode '{title}' to Buzzsprout: {response.content}")
-        print(f"Audio URL: {file_url}")
+
+    print(f"Uploading to Buzzsprout: {data}")  # Debug statement
+
+    for attempt in range(3):  # Retry mechanism
+        response = requests.post(url, headers=headers, json=data)
+        print(f"Buzzsprout response: {response.status_code}, {response.content}")  # Debug statement
+        if response.status_code == 201:
+            print(f"Episode '{title}' uploaded successfully to Buzzsprout.")
+            return
+        elif response.status_code == 403:
+            print("Cloudflare block encountered. Retrying...")
+        else:
+            print(f"Failed to upload episode '{title}' to Buzzsprout: {response.content}")
+            print(f"Audio URL: {file_url}")
+            return
+
+    print(f"Failed to upload episode '{title}' to Buzzsprout after multiple attempts.")
+
 
 def get_channel_videos(channel_id, api_key):
     youtube = build('youtube', 'v3', developerKey=api_key)
@@ -82,8 +104,10 @@ def get_channel_videos(channel_id, api_key):
         order="date"
     )
     response = request.execute()
-    video_urls = ["https://www.youtube.com/watch?v=" + item['id']['videoId'] for item in response['items'] if item['id']['kind'] == 'youtube#video']
+    video_urls = ["https://www.youtube.com/watch?v=" + item['id']['videoId'] for item in response['items'] if
+                  item['id']['kind'] == 'youtube#video']
     return video_urls
+
 
 def download_video(url, download_path):
     yt = YouTube(url)
@@ -93,6 +117,7 @@ def download_video(url, download_path):
     ffmpeg.input(output_file).output(output_mp3).run()
     os.remove(output_file)
     return output_mp3
+
 
 def get_mp3_files_metadata(download_path):
     episodes = []
@@ -109,6 +134,7 @@ def get_mp3_files_metadata(download_path):
                 'length': file_size
             })
     return episodes
+
 
 def generate_rss_feed(channel_name, episodes, output_path):
     rss_feed = f"""<?xml version="1.0" encoding="UTF-8"?>
@@ -135,6 +161,7 @@ def generate_rss_feed(channel_name, episodes, output_path):
     with open(output_path, 'w', encoding='utf-8') as f:
         f.write(rss_feed)
 
+
 @app.task
 def download_channel_podcast(channel_url):
     try:
@@ -152,9 +179,13 @@ def download_channel_podcast(channel_url):
 
         for video_url in video_urls:
             try:
+                print(f"Downloading video: {video_url}")  # Debug statement
                 mp3_file = download_video(video_url, download_path)
                 file_metadata = get_mp3_files_metadata(download_path)[0]  # Get metadata for the newly downloaded file
-                s3_url = upload_to_s3(mp3_file, os.getenv('AWS_BUCKET_NAME'), f"{channel_id}/{os.path.basename(mp3_file)}")
+                print(f"File metadata: {file_metadata}")  # Debug statement
+                s3_url = upload_to_s3(mp3_file, os.getenv('AWS_BUCKET_NAME'),
+                                      f"{channel_id}/{os.path.basename(mp3_file)}")
+                print(f"Uploaded MP3 URL: {s3_url}")  # Debug statement
                 upload_to_buzzsprout(file_metadata['title'], file_metadata['description'], s3_url)
             except Exception as e:
                 print(f"Failed to download video {video_url}: {e}")
