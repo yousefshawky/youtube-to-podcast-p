@@ -1,20 +1,24 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>Podcast Creator</title>
-  </head>
-  <body>
-    <div class="container">
-      <h1>Create Podcast from YouTube Channel</h1>
-      <form method="post">
-        <div class="form-group">
-          <label for="channel_url">YouTube Channel URL</label>
-          <input type="url" class="form-control" id="channel_url" name="channel_url" required>
-        </div>
-        <button type="submit" class="btn btn-primary">Submit</button>
-      </form>
-    </div>
-  </body>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>YouTube to Podcast</title>
+</head>
+<body>
+    <h1>YouTube to Podcast Converter</h1>
+    <form action="/" method="get">
+        <label for="channel_url">Channel URL:</label>
+        <input type="text" id="channel_url" name="channel_url">
+        <br><br>
+        <label for="playlist_url">Playlist URL:</label>
+        <input type="text" id="playlist_url" name="playlist_url">
+        <br><br>
+        <label for="min_duration_minutes">Minimum Duration (Minutes):</label>
+        <input type="number" id="min_duration_minutes" name="min_duration_minutes" min="0">
+        <br><br>
+        <label for="min_duration_seconds">Minimum Duration (Seconds):</label>
+        <input type="number" id="min_duration_seconds" name="min_duration_seconds" min="0">
+        <br><br>
+        <input type="submit" value="Convert">
+    </form>
+</body>
 </html>
