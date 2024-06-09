@@ -1,27 +1,38 @@
-document.getElementById('download-form').addEventListener('submit', function (event) {
-    event.preventDefault();
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('converter-form');
+    const logsContainer = document.getElementById('logs');
 
-    const channelUrl = document.getElementById('channel-url').value;
-    const minDurationMinutes = parseInt(document.getElementById('min-duration-minutes').value, 10) || 0;
-    const minDurationSeconds = parseInt(document.getElementById('min-duration-seconds').value, 10) || 0;
-    const minDuration = (minDurationMinutes * 60) + minDurationSeconds;
+    form.addEventListener('submit', function(event) {
+        event.preventDefault();
 
-    fetch('/download', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            channel_url: channelUrl,
-            min_duration: minDuration,
-        }),
-    })
-    .then(response => response.json())
-    .then(data => {
-        const statusDiv = document.getElementById('status');
-        statusDiv.innerHTML = `Task ID: ${data.task_id}<br>Status: ${data.status}`;
-    })
-    .catch((error) => {
-        console.error('Error:', error);
+        const url = document.getElementById('url').value;
+        const minDurationMinutes = document.getElementById('min-duration-minutes').value;
+        const minDurationSeconds = document.getElementById('min-duration-seconds').value;
+
+        fetch('/start-conversion', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ url: url, min_duration_minutes: minDurationMinutes, min_duration_seconds: minDurationSeconds })
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log(data.status);
+            logsContainer.innerHTML = 'Processing...';
+            startEventSource();
+        })
+        .catch(error => console.error('Error:', error));
     });
+
+    function startEventSource() {
+        const eventSource = new EventSource('/status-updates');
+        eventSource.onmessage = function(event) {
+            logsContainer.innerHTML += `<div>${event.data}</div>`;
+        };
+        eventSource.onerror = function(event) {
+            console.error('EventSource failed:', event);
+            eventSource.close();
+        };
+    }
 });
