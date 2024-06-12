@@ -1,0 +1,11 @@
+Flask
+Flask-SocketIO
+eventlet
+pytube
+requests
+boto3
+google-api-python-client
+celery
+python-dotenv
+redis
+certifi

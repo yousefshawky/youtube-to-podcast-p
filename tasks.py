@@ -12,22 +12,21 @@ from googleapiclient.discovery import build
 from celery import Celery
 from dotenv import load_dotenv
 import logging
-from flask import current_app, Flask
+import redis
+from flask_socketio import SocketIO
 
 load_dotenv()
 
-flask_app = Flask(__name__)
-
 celery_app = Celery('tasks', broker='redis://localhost:6379/0', backend='redis://localhost:6379/0')
+
+# Redis client
+redis_client = redis.StrictRedis(host='localhost', port=6379, db=0)
 
 # SSL context for requests
 ssl_context = ssl.create_default_context(cafile=certifi.where())
 
 # Setup logging
 logging.basicConfig(filename='logfile.log', level=logging.INFO, format='%(message)s')
-
-# Store the status updates
-status_updates = []
 
 # Custom get function for pytube
 def custom_get(url, headers=None, timeout=None):
@@ -60,13 +59,12 @@ def is_url_accessible(url):
         return False
 
 def format_description(description):
-    # Replace new lines with HTML line breaks to preserve formatting
     return description.replace('\n', '<br>\n')
 
 def upload_to_buzzsprout(title, description, file_url):
     if not is_url_accessible(file_url):
-        status_updates.append(f"Failed to upload episode '{title}' to Buzzsprout: URL not accessible")
         logging.info(f"Failed to upload episode '{title}' to Buzzsprout: URL not accessible")
+        emit_status(f"Failed to upload episode '{title}' to Buzzsprout: URL not accessible")
         return False
 
     api_key = os.getenv('BUZZSPROUT_API_KEY')
@@ -84,13 +82,12 @@ def upload_to_buzzsprout(title, description, file_url):
     }
     response = requests.post(url, headers=headers, json=data)
     if response.status_code == 201:
-        status_updates.append(f"Episode '{title}' uploaded successfully to Buzzsprout.")
         logging.info(f"Episode '{title}' uploaded successfully to Buzzsprout.")
-        return response.json().get('id')  # Return the episode ID
+        emit_status(f"Episode '{title}' uploaded successfully to Buzzsprout.")
+        return response.json().get('id')
     else:
-        status_updates.append(f"Failed to upload episode '{title}' to Buzzsprout: {response.content}")
         logging.info(f"Failed to upload episode '{title}' to Buzzsprout: {response.content}")
-        status_updates.append(f"Audio URL: {file_url}")
+        emit_status(f"Failed to upload episode '{title}' to Buzzsprout: {response.content}")
         return None
 
 def get_channel_videos(channel_id, api_key):
@@ -110,132 +107,119 @@ def get_channel_videos(channel_id, api_key):
 def get_playlist_videos(playlist_id, api_key):
     youtube = build('youtube', 'v3', developerKey=api_key)
     request = youtube.playlistItems().list(
-        part="snippet,contentDetails",
+        part="snippet",
         playlistId=playlist_id,
         maxResults=50
     )
     response = request.execute()
-    video_urls = [{"url": "https://www.youtube.com/watch?v=" + item['contentDetails']['videoId'],
+    video_urls = [{"url": "https://www.youtube.com/watch?v=" + item['snippet']['resourceId']['videoId'],
                    "description": item['snippet']['description']} for item in response['items']]
     return video_urls
 
-def get_video_details(video_id, api_key):
-    youtube = build('youtube', 'v3', developerKey=api_key)
-    request = youtube.videos().list(
-        part="snippet,contentDetails",
-        id=video_id
-    )
-    response = request.execute()
-    if 'items' in response and len(response['items']) > 0:
-        return response['items'][0]['snippet'], response['items'][0]['contentDetails']
-    return None, None
+def emit_status(message):
+    logging.info(f"Emitting status: {message}")
+    redis_client.publish('status_updates', message)
 
-def download_video(url, download_path):
-    yt = YouTube(url)
-    status_updates.append(f"Starting download: {yt.title}")
-    logging.info(f"Starting download: {yt.title}")
-    stream = yt.streams.filter(progressive=True, file_extension='mp4').first()
-    output_file = stream.download(output_path=download_path)
-    output_mp3 = output_file.replace('.mp4', '.mp3')
-    ffmpeg.input(output_file).output(output_mp3).run()
-    os.remove(output_file)
-    return output_mp3
+@celery_app.task(bind=True)
+def download_channel_podcast(self, url, min_duration):
+    try:
+        channel = Channel(url)
+        channel_name = channel.channel_name
+        channel_id = channel.channel_id
+        download_path = os.path.join("downloaded", channel_id)
+        os.makedirs(download_path, exist_ok=True)
 
-def get_mp3_metadata(file_path):
-    file_size = os.path.getsize(file_path)
-    pub_date = datetime.now(pytz.utc).strftime("%a, %d %b %Y %H:%M:%S +0000")
-    title = os.path.basename(file_path).replace('.mp3', '')
-    return {
-        'title': title,
-        'description': f"Episode from {title}",
-        'pubDate': pub_date,
-        'url': upload_to_s3(file_path, os.getenv('AWS_BUCKET_NAME'), f"podcast/{os.path.basename(file_path)}"),
-        'length': file_size
-    }
+        api_key = os.getenv('API_KEY')
+        if not api_key:
+            raise ValueError("No API key provided. Please set the API_KEY environment variable.")
 
-def download_podcast(video_urls, min_duration, download_path, bucket_name, channel_or_playlist_id):
-    uploaded_episodes = []
-    for video in video_urls:
-        try:
-            yt = YouTube(video["url"])
-            video_duration = yt.length  # in seconds
-            if video_duration is None or video_duration < min_duration:
-                status_updates.append(f"Skipping video '{yt.title}' as it is shorter than the minimum duration or duration is not available.")
-                continue
+        video_urls = get_channel_videos(channel_id, api_key)
+        emit_status('Download started for channel')
+        logging.info("Processing started...")
+        uploaded_episodes = []
 
-            snippet, content_details = get_video_details(yt.video_id, os.getenv('API_KEY'))
-            if snippet is None or content_details is None:
-                status_updates.append(f"Skipping video {video['url']} due to missing details.")
-                continue
+        for video in video_urls:
+            try:
+                yt = YouTube(video["url"])
+                video_duration = yt.length
+                if video_duration is None or video_duration < min_duration:
+                    logging.info(f"Skipping video '{yt.title}' as it is shorter than the minimum duration or duration is not available.")
+                    emit_status(f"Skipping video '{yt.title}' as it is shorter than the minimum duration or duration is not available.")
+                    continue
 
-            mp3_file = download_video(video["url"], download_path)
-            file_metadata = get_mp3_metadata(mp3_file)
-            status_updates.append(f"Starting upload: {file_metadata['title']}")
-            s3_url = upload_to_s3(mp3_file, bucket_name, f"{channel_or_playlist_id}/{os.path.basename(mp3_file)}")
-            episode_id = upload_to_buzzsprout(file_metadata['title'], snippet['description'], s3_url)
-            if episode_id:
-                uploaded_episodes.append({'title': file_metadata['title'], 'episode_id': episode_id})
-                status_updates.append(f"Deleting local file: {mp3_file}")
-                os.remove(mp3_file)  # Delete local file
-            else:
-                status_updates.append(f"Failed to upload episode '{file_metadata['title']}' to Buzzsprout.")
-        except Exception as e:
-            status_updates.append(f"Failed to download video {video['url']} due to error: {e}")
+                logging.info(f"Downloading video: {yt.title}")
+                emit_status(f"Downloading video: {yt.title}")
+                yt.streams.filter(only_audio=True).first().download(output_path=download_path, filename=f'{yt.title}.mp3')
+                file_path = os.path.join(download_path, f'{yt.title}.mp3')
 
-    return uploaded_episodes
+                logging.info(f"Uploading video: {yt.title}")
+                emit_status(f"Uploading video: {yt.title}")
+                s3_url = upload_to_s3(file_path, os.getenv('AWS_BUCKET_NAME'), f'podcasts/{yt.title}.mp3')
+                buzzsprout_id = upload_to_buzzsprout(yt.title, yt.description, s3_url)
+                logging.info(f"Video {yt.title} uploaded with ID {buzzsprout_id}")
+                emit_status(f"Video {yt.title} uploaded with ID {buzzsprout_id}")
+                uploaded_episodes.append({'title': yt.title, 'episode_id': buzzsprout_id})
+                os.remove(file_path)
+            except Exception as e:
+                logging.info(f"Failed to download video {video['url']} due to error: {e}")
+                emit_status(f"Failed to download video {video['url']} due to error: {e}")
 
-@celery_app.task
-def download_channel_podcast(channel_url, min_duration):
-    with flask_app.app_context():
-        global status_updates
-        status_updates = []
-        try:
-            channel = Channel(channel_url)
-            channel_name = channel.channel_name
-            channel_id = channel.channel_id
-            download_path = os.path.join("downloaded", channel_id)
-            os.makedirs(download_path, exist_ok=True)
+        logging.info(f"Upload complete, {len(uploaded_episodes)} episodes have been uploaded to your Buzzsprout dashboard.")
+        emit_status(f"Upload complete, {len(uploaded_episodes)} episodes have been uploaded to your Buzzsprout dashboard.")
+        return uploaded_episodes
+    except Exception as e:
+        logging.info(f"Error processing channel: {e}")
+        emit_status(f"Error processing channel: {e}")
+        return []
 
-            api_key = os.getenv('API_KEY')
-            if not api_key:
-                raise ValueError("No API key provided. Please set the API_KEY environment variable.")
+@celery_app.task(bind=True)
+def download_playlist_podcast(self, url, min_duration):
+    try:
+        playlist = Playlist(url)
+        playlist_id = playlist.playlist_id
+        playlist_title = playlist.title
+        download_path = os.path.join("downloaded", playlist_id)
+        os.makedirs(download_path, exist_ok=True)
 
-            video_urls = get_channel_videos(channel_id, api_key)
-            status_updates.append("Processing started...")
-            logging.info("Processing started...")
-            uploaded_episodes = download_podcast(video_urls, min_duration, download_path, os.getenv('AWS_BUCKET_NAME'), channel_id)
-            status_updates.append(f"Upload complete, {len(uploaded_episodes)} episodes have been uploaded to your Buzzsprout dashboard.")
-            logging.info(f"Upload complete, {len(uploaded_episodes)} episodes have been uploaded to your Buzzsprout dashboard.")
-            return uploaded_episodes
-        except Exception as e:
-            status_updates.append(f"Failed to create podcast: {e}")
-            logging.error(f"Failed to create podcast: {e}")
-            return []
+        api_key = os.getenv('API_KEY')
+        if not api_key:
+            raise ValueError("No API key provided. Please set the API_KEY environment variable.")
 
-@celery_app.task
-def download_playlist_podcast(playlist_url, min_duration):
-    with flask_app.app_context():
-        global status_updates
-        status_updates = []
-        try:
-            playlist = Playlist(playlist_url)
-            playlist_title = playlist.title
-            playlist_id = playlist.playlist_id
-            download_path = os.path.join("downloaded", playlist_id)
-            os.makedirs(download_path, exist_ok=True)
+        video_urls = get_playlist_videos(playlist_id, api_key)
+        emit_status('Download started for playlist')
+        logging.info("Processing started...")
+        uploaded_episodes = []
 
-            api_key = os.getenv('API_KEY')
-            if not api_key:
-                raise ValueError("No API key provided. Please set the API_KEY environment variable.")
+        for video in video_urls:
+            try:
+                yt = YouTube(video["url"])
+                video_duration = yt.length
+                if video_duration is None or video_duration < min_duration:
+                    logging.info(f"Skipping video '{yt.title}' as it is shorter than the minimum duration or duration is not available.")
+                    emit_status(f"Skipping video '{yt.title}' as it is shorter than the minimum duration or duration is not available.")
+                    continue
 
-            video_urls = get_playlist_videos(playlist_id, api_key)
-            status_updates.append("Processing started...")
-            logging.info("Processing started...")
-            uploaded_episodes = download_podcast(video_urls, min_duration, download_path, os.getenv('AWS_BUCKET_NAME'), playlist_id)
-            status_updates.append(f"Upload complete, {len(uploaded_episodes)} episodes have been uploaded to your Buzzsprout dashboard.")
-            logging.info(f"Upload complete, {len(uploaded_episodes)} episodes have been uploaded to your Buzzsprout dashboard.")
-            return uploaded_episodes
-        except Exception as e:
-            status_updates.append(f"Failed to create podcast: {e}")
-            logging.error(f"Failed to create podcast: {e}")
-            return []
+                logging.info(f"Downloading video: {yt.title}")
+                emit_status(f"Downloading video: {yt.title}")
+                yt.streams.filter(only_audio=True).first().download(output_path=download_path, filename=f'{yt.title}.mp3')
+                file_path = os.path.join(download_path, f'{yt.title}.mp3')
+
+                logging.info(f"Uploading video: {yt.title}")
+                emit_status(f"Uploading video: {yt.title}")
+                s3_url = upload_to_s3(file_path, os.getenv('AWS_BUCKET_NAME'), f'podcasts/{yt.title}.mp3')
+                buzzsprout_id = upload_to_buzzsprout(yt.title, yt.description, s3_url)
+                logging.info(f"Video {yt.title} uploaded with ID {buzzsprout_id}")
+                emit_status(f"Video {yt.title} uploaded with ID {buzzsprout_id}")
+                uploaded_episodes.append({'title': yt.title, 'episode_id': buzzsprout_id})
+                os.remove(file_path)
+            except Exception as e:
+                logging.info(f"Failed to download video {video['url']} due to error: {e}")
+                emit_status(f"Failed to download video {video['url']} due to error: {e}")
+
+        logging.info(f"Upload complete, {len(uploaded_episodes)} episodes have been uploaded to your Buzzsprout dashboard.")
+        emit_status(f"Upload complete, {len(uploaded_episodes)} episodes have been uploaded to your Buzzsprout dashboard.")
+        return uploaded_episodes
+    except Exception as e:
+        logging.info(f"Error processing playlist: {e}")
+        emit_status(f"Error processing playlist: {e}")
+        return []

@@ -1,6 +1,23 @@
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('converter-form');
-    const logsContainer = document.getElementById('logs');
+    const statusDiv = document.getElementById('status');
+
+    const socket = io.connect('http://' + document.domain + ':' + location.port);
+
+    socket.on('connect', function() {
+        console.log('WebSocket connected');
+    });
+
+    socket.on('disconnect', function() {
+        console.log('WebSocket disconnected');
+    });
+
+    socket.on('status', function(data) {
+        console.log('Status update received:', data);
+        const newMessage = document.createElement('p');
+        newMessage.innerText = data.message;
+        statusDiv.appendChild(newMessage);
+    });
 
     form.addEventListener('submit', function(event) {
         event.preventDefault();
@@ -14,25 +31,24 @@ document.addEventListener('DOMContentLoaded', function() {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ url: url, min_duration_minutes: minDurationMinutes, min_duration_seconds: minDurationSeconds })
+            body: JSON.stringify({
+                url: url,
+                min_duration_minutes: minDurationMinutes,
+                min_duration_seconds: minDurationSeconds
+            })
         })
         .then(response => response.json())
         .then(data => {
-            console.log(data.status);
-            logsContainer.innerHTML = 'Processing...';
-            startEventSource();
+            if (data.status === 'started') {
+                const newMessage = document.createElement('p');
+                newMessage.innerText = 'Conversion started';
+                statusDiv.appendChild(newMessage);
+            } else {
+                const newMessage = document.createElement('p');
+                newMessage.innerText = 'Error: ' + data.message;
+                statusDiv.appendChild(newMessage);
+            }
         })
         .catch(error => console.error('Error:', error));
     });
-
-    function startEventSource() {
-        const eventSource = new EventSource('/status-updates');
-        eventSource.onmessage = function(event) {
-            logsContainer.innerHTML += `<div>${event.data}</div>`;
-        };
-        eventSource.onerror = function(event) {
-            console.error('EventSource failed:', event);
-            eventSource.close();
-        };
-    }
 });
