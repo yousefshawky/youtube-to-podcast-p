@@ -5,7 +5,7 @@ import os
 from flask import Flask, request, jsonify, render_template
 from flask_socketio import SocketIO, emit
 from celery import Celery
-from tasks import download_channel_podcast, download_playlist_podcast
+from tasks import download_channel_podcast, download_playlist_podcast, resolve_channel_url
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
@@ -37,18 +37,25 @@ celery = make_celery(app)
 def index():
     return render_template('index.html')
 
+
 @app.route('/start-conversion', methods=['POST'])
 def start_conversion():
     data = request.json
     url = data['url']
-    min_duration_minutes = int(data['min_duration_minutes'])
-    min_duration_seconds = int(data['min_duration_seconds'])
-    min_duration = min_duration_minutes * 60 + min_duration_seconds
+    min_duration = data.get('min_duration_minutes', 0) * 60 + data.get('min_duration_seconds', 0) if 'min_duration_minutes' in data and 'min_duration_seconds' in data else None
+    max_duration = data.get('max_duration_minutes', 0) * 60 + data.get('max_duration_seconds', 0) if 'max_duration_minutes' in data and 'max_duration_seconds' in data else None
+    title_filter = data.get('title_filter', None)
 
-    if "playlist?list=" in url:
-        task = download_playlist_podcast.apply_async(args=[url, min_duration])
-    elif "channel/" in url:
-        task = download_channel_podcast.apply_async(args=[url, min_duration])
+    # Resolve the correct URL format
+    api_key = os.getenv('API_KEY')
+    resolved_url = resolve_channel_url(url, api_key)
+    if not resolved_url:
+        return jsonify({"status": "error", "message": "Invalid URL format"})
+
+    if "playlist?list=" in resolved_url:
+        task = download_playlist_podcast.apply_async(args=[resolved_url, min_duration, max_duration, title_filter])
+    elif "channel/" in resolved_url or "/@" in resolved_url:
+        task = download_channel_podcast.apply_async(args=[resolved_url, min_duration, max_duration, title_filter])
     else:
         return jsonify({"status": "error", "message": "Invalid URL format"})
 

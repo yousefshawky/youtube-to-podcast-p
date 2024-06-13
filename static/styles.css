@@ -1,5 +1,5 @@
 body {
-    font-family: Arial, sans-serif;
+    font-family: 'Lato', Arial, sans-serif;
     background-color: #f0f8ff;
     display: flex;
     justify-content: center;
@@ -13,34 +13,66 @@ body {
     border: 1px solid #dcdcdc;
     border-radius: 10px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    padding: 20px;
-    max-width: 500px;
+    padding: 40px;
+    max-width: 800px;
     width: 100%;
     text-align: center;
 }
 
 h1 {
     margin-top: 0;
+    margin-bottom: 20px;
+}
+
+.filters-heading {
+    margin-top: 0;
+    margin-bottom: 20px;
+    text-align: left;
+    width: 100%;
 }
 
 form {
     display: flex;
     flex-direction: column;
+    align-items: center;
+}
+
+.input-group, .filter-group {
+    margin-bottom: 20px;
+    width: 100%;
+    text-align: left;
 }
 
 label {
     margin: 10px 0 5px;
+    display: block;
 }
 
-input {
+input[type="text"], input[type="number"] {
     padding: 10px;
     margin-bottom: 10px;
     border: 1px solid #dcdcdc;
     border-radius: 5px;
+    width: 100%;
+}
+
+.inline-inputs {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.inline-inputs label {
+    margin-right: 10px;
+}
+
+.inline-inputs input[type="number"] {
+    width: 100px;
+    margin-right: 10px;
 }
 
 button {
-    padding: 10px;
+    padding: 10px 20px;
     border: none;
     border-radius: 5px;
     background-color: #87cefa;
@@ -51,6 +83,16 @@ button {
 
 button:hover {
     background-color: #00bfff;
+}
+
+.filter-option {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.filter-option label {
+    margin-left: 10px;
 }
 
 #status {
