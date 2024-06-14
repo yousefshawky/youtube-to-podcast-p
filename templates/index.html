@@ -16,6 +16,15 @@
                 <input type="text" id="url" name="url" required>
             </div>
             <br>
+            <div class="input-group">
+                <label for="buzzsprout-api-key">Buzzsprout API Key:</label>
+                <input type="text" id="buzzsprout-api-key" name="buzzsprout-api-key" required>
+            </div>
+            <div class="input-group">
+                <label for="buzzsprout-podcast-id">Buzzsprout Podcast ID:</label>
+                <input type="text" id="buzzsprout-podcast-id" name="buzzsprout-podcast-id" required>
+            </div>
+            <br>
             <h2 class="filters-heading">Filters</h2>
             <div class="filter-group">
                 <div class="filter-option">
@@ -47,11 +56,8 @@
             <br>
             <button type="submit">Start Conversion</button>
         </form>
-
-        <div id="status" style="display:none;"></div>
     </div>
 
-    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
     <script src="static/script.js"></script>
 </body>
 </html>

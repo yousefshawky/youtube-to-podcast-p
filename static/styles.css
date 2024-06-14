@@ -58,8 +58,8 @@ input[type="text"], input[type="number"] {
 
 .inline-inputs {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
 }
 
 .inline-inputs label {
@@ -68,7 +68,6 @@ input[type="text"], input[type="number"] {
 
 .inline-inputs input[type="number"] {
     width: 100px;
-    margin-right: 10px;
 }
 
 button {
