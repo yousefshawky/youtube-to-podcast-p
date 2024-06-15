@@ -13,7 +13,6 @@ from celery import Celery
 from dotenv import load_dotenv
 import logging
 import redis
-from flask_socketio import SocketIO
 
 load_dotenv()
 
@@ -71,7 +70,6 @@ def upload_to_buzzsprout(title, description, file_url, env_path):
 
     if not is_url_accessible(file_url):
         logging.info(f"Failed to upload episode '{title}' to Buzzsprout: URL not accessible")
-        emit_status(f"Failed to upload episode '{title}' to Buzzsprout: URL not accessible")
         return False
 
     url = f'https://www.buzzsprout.com/api/{buzzsprout_podcast_id}/episodes'
@@ -88,11 +86,9 @@ def upload_to_buzzsprout(title, description, file_url, env_path):
     response = requests.post(url, headers=headers, json=data)
     if response.status_code == 201:
         logging.info(f"Episode '{title}' uploaded successfully to Buzzsprout.")
-        emit_status(f"Episode '{title}' uploaded successfully to Buzzsprout.")
         return response.json().get('id')
     else:
         logging.info(f"Failed to upload episode '{title}' to Buzzsprout: {response.content}")
-        emit_status(f"Failed to upload episode '{title}' to Buzzsprout: {response.content}")
         return None
 
 def get_channel_videos(channel_id, api_key):

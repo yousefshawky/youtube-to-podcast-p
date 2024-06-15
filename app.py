@@ -1,6 +1,3 @@
-import eventlet
-eventlet.monkey_patch()
-
 import os
 from flask import Flask, request, jsonify, render_template
 from flask_socketio import SocketIO
@@ -14,7 +11,7 @@ logging.basicConfig(level=logging.INFO)
 
 app = Flask(__name__, static_folder='static', template_folder='templates')
 app.config['SECRET_KEY'] = 'secret!'
-socketio = SocketIO(app, message_queue='redis://localhost:6379/0', async_mode='eventlet')
+socketio = SocketIO(app, message_queue='redis://localhost:6379/0')
 
 def make_celery(app):
     celery = Celery(app.import_name, broker=app.config['CELERY_BROKER_URL'])
