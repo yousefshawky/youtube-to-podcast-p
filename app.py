@@ -12,7 +12,7 @@ import logging
 # Initialize logging
 logging.basicConfig(level=logging.INFO)
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='static', template_folder='templates')
 app.config['SECRET_KEY'] = 'secret!'
 socketio = SocketIO(app, message_queue='redis://localhost:6379/0', async_mode='eventlet')
 
