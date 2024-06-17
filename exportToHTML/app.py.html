@@ -1,0 +1,57 @@
+<html>
+<head>
+<title>app.py</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #cf8e6d;}
+.s1 { color: #bcbec4;}
+.s2 { color: #bcbec4;}
+.s3 { color: #7a7e85;}
+.s4 { color: #6aab73;}
+.s5 { color: #2aacb8;}
+</style>
+</head>
+<body bgcolor="#1e1f22">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#606060" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+app.py</font>
+</center></td></tr></table>
+<pre><span class="s0">import </span><span class="s1">os</span>
+<span class="s0">from </span><span class="s1">flask </span><span class="s0">import </span><span class="s1">Flask</span><span class="s2">, </span><span class="s1">render_template</span><span class="s2">, </span><span class="s1">request</span><span class="s2">, </span><span class="s1">jsonify</span>
+<span class="s0">from </span><span class="s1">tasks </span><span class="s0">import </span><span class="s1">download_channel_podcast</span><span class="s2">, </span><span class="s1">download_playlist_podcast</span>
+<span class="s0">import </span><span class="s1">logging</span>
+
+<span class="s1">app </span><span class="s2">= </span><span class="s1">Flask</span><span class="s2">(</span><span class="s1">__name__</span><span class="s2">)</span>
+
+<span class="s3"># Ensure the 'static' folder is correctly configured</span>
+<span class="s1">app</span><span class="s2">.</span><span class="s1">config</span><span class="s2">[</span><span class="s4">'SEND_FILE_MAX_AGE_DEFAULT'</span><span class="s2">] = </span><span class="s5">0</span>
+
+<span class="s2">@</span><span class="s1">app</span><span class="s2">.</span><span class="s1">route</span><span class="s2">(</span><span class="s4">'/'</span><span class="s2">)</span>
+<span class="s0">def </span><span class="s1">index</span><span class="s2">():</span>
+    <span class="s0">return </span><span class="s1">render_template</span><span class="s2">(</span><span class="s4">'index.html'</span><span class="s2">)</span>
+
+
+<span class="s2">@</span><span class="s1">app</span><span class="s2">.</span><span class="s1">route</span><span class="s2">(</span><span class="s4">'/start-conversion'</span><span class="s2">, </span><span class="s1">methods</span><span class="s2">=[</span><span class="s4">'POST'</span><span class="s2">])</span>
+<span class="s0">def </span><span class="s1">start_conversion</span><span class="s2">():</span>
+    <span class="s1">data </span><span class="s2">= </span><span class="s1">request</span><span class="s2">.</span><span class="s1">json</span>
+    <span class="s1">url </span><span class="s2">= </span><span class="s1">data</span><span class="s2">[</span><span class="s4">'url'</span><span class="s2">]</span>
+    <span class="s1">min_duration_minutes </span><span class="s2">= </span><span class="s1">data</span><span class="s2">.</span><span class="s1">get</span><span class="s2">(</span><span class="s4">'min_duration_minutes'</span><span class="s2">, </span><span class="s5">0</span><span class="s2">)</span>
+    <span class="s1">min_duration_seconds </span><span class="s2">= </span><span class="s1">data</span><span class="s2">.</span><span class="s1">get</span><span class="s2">(</span><span class="s4">'min_duration_seconds'</span><span class="s2">, </span><span class="s5">0</span><span class="s2">)</span>
+    <span class="s1">min_duration </span><span class="s2">= </span><span class="s1">int</span><span class="s2">(</span><span class="s1">min_duration_minutes</span><span class="s2">) * </span><span class="s5">60 </span><span class="s2">+ </span><span class="s1">int</span><span class="s2">(</span><span class="s1">min_duration_seconds</span><span class="s2">)</span>
+
+    <span class="s0">if </span><span class="s4">'channel' </span><span class="s0">in </span><span class="s1">url</span><span class="s2">:</span>
+        <span class="s1">task </span><span class="s2">= </span><span class="s1">download_channel_podcast</span><span class="s2">.</span><span class="s1">delay</span><span class="s2">(</span><span class="s1">url</span><span class="s2">, </span><span class="s1">min_duration</span><span class="s2">)</span>
+    <span class="s0">elif </span><span class="s4">'playlist' </span><span class="s0">in </span><span class="s1">url</span><span class="s2">:</span>
+        <span class="s1">task </span><span class="s2">= </span><span class="s1">download_playlist_podcast</span><span class="s2">.</span><span class="s1">delay</span><span class="s2">(</span><span class="s1">url</span><span class="s2">, </span><span class="s1">min_duration</span><span class="s2">)</span>
+    <span class="s0">else</span><span class="s2">:</span>
+        <span class="s0">return </span><span class="s1">jsonify</span><span class="s2">({</span><span class="s4">'status'</span><span class="s2">: </span><span class="s4">'error'</span><span class="s2">, </span><span class="s4">'message'</span><span class="s2">: </span><span class="s4">'Invalid URL'</span><span class="s2">}), </span><span class="s5">400</span>
+
+    <span class="s0">return </span><span class="s1">jsonify</span><span class="s2">({</span><span class="s4">'status'</span><span class="s2">: </span><span class="s4">'started'</span><span class="s2">, </span><span class="s4">'task_id'</span><span class="s2">: </span><span class="s1">task</span><span class="s2">.</span><span class="s1">id</span><span class="s2">}), </span><span class="s5">202</span>
+
+<span class="s0">if </span><span class="s1">__name__ </span><span class="s2">== </span><span class="s4">'__main__'</span><span class="s2">:</span>
+    <span class="s1">logging</span><span class="s2">.</span><span class="s1">basicConfig</span><span class="s2">(</span><span class="s1">filename</span><span class="s2">=</span><span class="s4">'logfile.log'</span><span class="s2">, </span><span class="s1">level</span><span class="s2">=</span><span class="s1">logging</span><span class="s2">.</span><span class="s1">INFO</span><span class="s2">)</span>
+    <span class="s1">app</span><span class="s2">.</span><span class="s1">run</span><span class="s2">(</span><span class="s1">debug</span><span class="s2">=</span><span class="s0">True</span><span class="s2">)</span>
+</pre>
+</body>
+</html>

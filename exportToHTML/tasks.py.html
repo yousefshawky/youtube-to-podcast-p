@@ -1,0 +1,245 @@
+<html>
+<head>
+<title>tasks.py</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #cf8e6d;}
+.s1 { color: #bcbec4;}
+.s2 { color: #bcbec4;}
+.s3 { color: #6aab73;}
+.s4 { color: #7a7e85;}
+.s5 { color: #2aacb8;}
+</style>
+</head>
+<body bgcolor="#1e1f22">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#606060" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+tasks.py</font>
+</center></td></tr></table>
+<pre><span class="s0">import </span><span class="s1">os</span>
+<span class="s0">import </span><span class="s1">requests</span>
+<span class="s0">import </span><span class="s1">certifi</span>
+<span class="s0">import </span><span class="s1">ssl</span>
+<span class="s0">import </span><span class="s1">urllib</span><span class="s2">.</span><span class="s1">request</span>
+<span class="s0">from </span><span class="s1">pytube </span><span class="s0">import </span><span class="s1">YouTube</span><span class="s2">, </span><span class="s1">Channel</span><span class="s2">, </span><span class="s1">Playlist</span><span class="s2">, </span><span class="s1">request</span>
+<span class="s0">import </span><span class="s1">ffmpeg</span>
+<span class="s0">import </span><span class="s1">boto3</span>
+<span class="s0">from </span><span class="s1">datetime </span><span class="s0">import </span><span class="s1">datetime</span>
+<span class="s0">import </span><span class="s1">pytz</span>
+<span class="s0">from </span><span class="s1">googleapiclient</span><span class="s2">.</span><span class="s1">discovery </span><span class="s0">import </span><span class="s1">build</span>
+<span class="s0">from </span><span class="s1">celery </span><span class="s0">import </span><span class="s1">Celery</span>
+<span class="s0">from </span><span class="s1">dotenv </span><span class="s0">import </span><span class="s1">load_dotenv</span>
+<span class="s0">import </span><span class="s1">logging</span>
+<span class="s0">from </span><span class="s1">flask </span><span class="s0">import </span><span class="s1">Flask</span>
+
+<span class="s1">load_dotenv</span><span class="s2">()</span>
+
+<span class="s1">flask_app </span><span class="s2">= </span><span class="s1">Flask</span><span class="s2">(</span><span class="s1">__name__</span><span class="s2">)</span>
+
+<span class="s1">celery_app </span><span class="s2">= </span><span class="s1">Celery</span><span class="s2">(</span><span class="s3">'tasks'</span><span class="s2">, </span><span class="s1">broker</span><span class="s2">=</span><span class="s3">'redis://localhost:6379/0'</span><span class="s2">, </span><span class="s1">backend</span><span class="s2">=</span><span class="s3">'redis://localhost:6379/0'</span><span class="s2">)</span>
+
+<span class="s4"># SSL context for requests</span>
+<span class="s1">ssl_context </span><span class="s2">= </span><span class="s1">ssl</span><span class="s2">.</span><span class="s1">create_default_context</span><span class="s2">(</span><span class="s1">cafile</span><span class="s2">=</span><span class="s1">certifi</span><span class="s2">.</span><span class="s1">where</span><span class="s2">())</span>
+
+<span class="s4"># Setup logging</span>
+<span class="s1">logging</span><span class="s2">.</span><span class="s1">basicConfig</span><span class="s2">(</span><span class="s1">filename</span><span class="s2">=</span><span class="s3">'logfile.log'</span><span class="s2">, </span><span class="s1">level</span><span class="s2">=</span><span class="s1">logging</span><span class="s2">.</span><span class="s1">INFO</span><span class="s2">, </span><span class="s1">format</span><span class="s2">=</span><span class="s3">'%(message)s'</span><span class="s2">)</span>
+
+<span class="s4"># Custom get function for pytube</span>
+<span class="s0">def </span><span class="s1">custom_get</span><span class="s2">(</span><span class="s1">url</span><span class="s2">, </span><span class="s1">headers</span><span class="s2">=</span><span class="s0">None</span><span class="s2">, </span><span class="s1">timeout</span><span class="s2">=</span><span class="s0">None</span><span class="s2">):</span>
+    <span class="s0">if </span><span class="s1">headers </span><span class="s0">is None</span><span class="s2">:</span>
+        <span class="s1">headers </span><span class="s2">= {}</span>
+    <span class="s1">req </span><span class="s2">= </span><span class="s1">urllib</span><span class="s2">.</span><span class="s1">request</span><span class="s2">.</span><span class="s1">Request</span><span class="s2">(</span><span class="s1">url</span><span class="s2">, </span><span class="s1">headers</span><span class="s2">=</span><span class="s1">headers</span><span class="s2">)</span>
+    <span class="s0">with </span><span class="s1">urllib</span><span class="s2">.</span><span class="s1">request</span><span class="s2">.</span><span class="s1">urlopen</span><span class="s2">(</span><span class="s1">req</span><span class="s2">, </span><span class="s1">context</span><span class="s2">=</span><span class="s1">ssl_context</span><span class="s2">, </span><span class="s1">timeout</span><span class="s2">=</span><span class="s1">timeout</span><span class="s2">) </span><span class="s0">as </span><span class="s1">response</span><span class="s2">:</span>
+        <span class="s0">return </span><span class="s1">response</span><span class="s2">.</span><span class="s1">read</span><span class="s2">().</span><span class="s1">decode</span><span class="s2">(</span><span class="s3">'utf-8'</span><span class="s2">)</span>
+
+<span class="s4"># Patch pytube's request handling</span>
+<span class="s1">request</span><span class="s2">.</span><span class="s1">get </span><span class="s2">= </span><span class="s1">custom_get</span>
+
+<span class="s4"># AWS S3 setup</span>
+<span class="s1">s3 </span><span class="s2">= </span><span class="s1">boto3</span><span class="s2">.</span><span class="s1">client</span><span class="s2">(</span>
+    <span class="s3">'s3'</span><span class="s2">,</span>
+    <span class="s1">aws_access_key_id</span><span class="s2">=</span><span class="s1">os</span><span class="s2">.</span><span class="s1">getenv</span><span class="s2">(</span><span class="s3">'AWS_ACCESS_KEY_ID'</span><span class="s2">),</span>
+    <span class="s1">aws_secret_access_key</span><span class="s2">=</span><span class="s1">os</span><span class="s2">.</span><span class="s1">getenv</span><span class="s2">(</span><span class="s3">'AWS_SECRET_ACCESS_KEY'</span><span class="s2">)</span>
+<span class="s2">)</span>
+
+<span class="s0">def </span><span class="s1">upload_to_s3</span><span class="s2">(</span><span class="s1">file_path</span><span class="s2">, </span><span class="s1">bucket_name</span><span class="s2">, </span><span class="s1">s3_key</span><span class="s2">):</span>
+    <span class="s1">s3</span><span class="s2">.</span><span class="s1">upload_file</span><span class="s2">(</span><span class="s1">file_path</span><span class="s2">, </span><span class="s1">bucket_name</span><span class="s2">, </span><span class="s1">s3_key</span><span class="s2">)</span>
+    <span class="s1">s3_url </span><span class="s2">= </span><span class="s3">f'https://</span><span class="s0">{</span><span class="s1">bucket_name</span><span class="s0">}</span><span class="s3">.s3.amazonaws.com/</span><span class="s0">{</span><span class="s1">s3_key</span><span class="s0">}</span><span class="s3">'</span>
+    <span class="s0">return </span><span class="s1">s3_url</span>
+
+<span class="s0">def </span><span class="s1">is_url_accessible</span><span class="s2">(</span><span class="s1">url</span><span class="s2">):</span>
+    <span class="s0">try</span><span class="s2">:</span>
+        <span class="s1">response </span><span class="s2">= </span><span class="s1">requests</span><span class="s2">.</span><span class="s1">head</span><span class="s2">(</span><span class="s1">url</span><span class="s2">)</span>
+        <span class="s0">return </span><span class="s1">response</span><span class="s2">.</span><span class="s1">status_code </span><span class="s2">== </span><span class="s5">200</span>
+    <span class="s0">except </span><span class="s1">requests</span><span class="s2">.</span><span class="s1">RequestException</span><span class="s2">:</span>
+        <span class="s0">return False</span>
+
+<span class="s0">def </span><span class="s1">format_description</span><span class="s2">(</span><span class="s1">description</span><span class="s2">):</span>
+    <span class="s4"># Replace new lines with HTML line breaks to preserve formatting</span>
+    <span class="s0">return </span><span class="s1">description</span><span class="s2">.</span><span class="s1">replace</span><span class="s2">(</span><span class="s3">'</span><span class="s0">\n</span><span class="s3">'</span><span class="s2">, </span><span class="s3">'&lt;br&gt;</span><span class="s0">\n</span><span class="s3">'</span><span class="s2">)</span>
+
+<span class="s0">def </span><span class="s1">upload_to_buzzsprout</span><span class="s2">(</span><span class="s1">title</span><span class="s2">, </span><span class="s1">description</span><span class="s2">, </span><span class="s1">file_url</span><span class="s2">):</span>
+    <span class="s0">if not </span><span class="s1">is_url_accessible</span><span class="s2">(</span><span class="s1">file_url</span><span class="s2">):</span>
+        <span class="s1">logging</span><span class="s2">.</span><span class="s1">info</span><span class="s2">(</span><span class="s3">f&quot;Failed to upload episode '</span><span class="s0">{</span><span class="s1">title</span><span class="s0">}</span><span class="s3">' to Buzzsprout: URL not accessible&quot;</span><span class="s2">)</span>
+        <span class="s0">return False</span>
+
+    <span class="s1">api_key </span><span class="s2">= </span><span class="s1">os</span><span class="s2">.</span><span class="s1">getenv</span><span class="s2">(</span><span class="s3">'BUZZSPROUT_API_KEY'</span><span class="s2">)</span>
+    <span class="s1">podcast_id </span><span class="s2">= </span><span class="s1">os</span><span class="s2">.</span><span class="s1">getenv</span><span class="s2">(</span><span class="s3">'BUZZSPROUT_PODCAST_ID'</span><span class="s2">)</span>
+    <span class="s1">url </span><span class="s2">= </span><span class="s3">f'https://www.buzzsprout.com/api/</span><span class="s0">{</span><span class="s1">podcast_id</span><span class="s0">}</span><span class="s3">/episodes'</span>
+    <span class="s1">headers </span><span class="s2">= {</span>
+        <span class="s3">'Authorization'</span><span class="s2">: </span><span class="s3">f'Token token=</span><span class="s0">{</span><span class="s1">api_key</span><span class="s0">}</span><span class="s3">'</span><span class="s2">,</span>
+        <span class="s3">'Content-Type'</span><span class="s2">: </span><span class="s3">'application/json'</span><span class="s2">,</span>
+        <span class="s3">'User-Agent'</span><span class="s2">: </span><span class="s3">'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'</span>
+    <span class="s2">}</span>
+    <span class="s1">data </span><span class="s2">= {</span>
+        <span class="s3">'title'</span><span class="s2">: </span><span class="s1">title</span><span class="s2">,</span>
+        <span class="s3">'description'</span><span class="s2">: </span><span class="s1">format_description</span><span class="s2">(</span><span class="s1">description</span><span class="s2">),</span>
+        <span class="s3">'audio_url'</span><span class="s2">: </span><span class="s1">file_url</span>
+    <span class="s2">}</span>
+    <span class="s1">response </span><span class="s2">= </span><span class="s1">requests</span><span class="s2">.</span><span class="s1">post</span><span class="s2">(</span><span class="s1">url</span><span class="s2">, </span><span class="s1">headers</span><span class="s2">=</span><span class="s1">headers</span><span class="s2">, </span><span class="s1">json</span><span class="s2">=</span><span class="s1">data</span><span class="s2">)</span>
+    <span class="s0">if </span><span class="s1">response</span><span class="s2">.</span><span class="s1">status_code </span><span class="s2">== </span><span class="s5">201</span><span class="s2">:</span>
+        <span class="s1">logging</span><span class="s2">.</span><span class="s1">info</span><span class="s2">(</span><span class="s3">f&quot;Episode '</span><span class="s0">{</span><span class="s1">title</span><span class="s0">}</span><span class="s3">' uploaded successfully to Buzzsprout.&quot;</span><span class="s2">)</span>
+        <span class="s0">return </span><span class="s1">response</span><span class="s2">.</span><span class="s1">json</span><span class="s2">().</span><span class="s1">get</span><span class="s2">(</span><span class="s3">'id'</span><span class="s2">)  </span><span class="s4"># Return the episode ID</span>
+    <span class="s0">else</span><span class="s2">:</span>
+        <span class="s1">logging</span><span class="s2">.</span><span class="s1">info</span><span class="s2">(</span><span class="s3">f&quot;Failed to upload episode '</span><span class="s0">{</span><span class="s1">title</span><span class="s0">}</span><span class="s3">' to Buzzsprout: </span><span class="s0">{</span><span class="s1">response</span><span class="s2">.</span><span class="s1">content</span><span class="s0">}</span><span class="s3">&quot;</span><span class="s2">)</span>
+        <span class="s0">return None</span>
+
+<span class="s0">def </span><span class="s1">get_channel_videos</span><span class="s2">(</span><span class="s1">channel_id</span><span class="s2">, </span><span class="s1">api_key</span><span class="s2">):</span>
+    <span class="s1">youtube </span><span class="s2">= </span><span class="s1">build</span><span class="s2">(</span><span class="s3">'youtube'</span><span class="s2">, </span><span class="s3">'v3'</span><span class="s2">, </span><span class="s1">developerKey</span><span class="s2">=</span><span class="s1">api_key</span><span class="s2">)</span>
+    <span class="s1">request </span><span class="s2">= </span><span class="s1">youtube</span><span class="s2">.</span><span class="s1">search</span><span class="s2">().</span><span class="s1">list</span><span class="s2">(</span>
+        <span class="s1">part</span><span class="s2">=</span><span class="s3">&quot;snippet&quot;</span><span class="s2">,</span>
+        <span class="s1">channelId</span><span class="s2">=</span><span class="s1">channel_id</span><span class="s2">,</span>
+        <span class="s1">maxResults</span><span class="s2">=</span><span class="s5">50</span><span class="s2">,</span>
+        <span class="s1">order</span><span class="s2">=</span><span class="s3">&quot;date&quot;</span>
+    <span class="s2">)</span>
+    <span class="s1">response </span><span class="s2">= </span><span class="s1">request</span><span class="s2">.</span><span class="s1">execute</span><span class="s2">()</span>
+    <span class="s1">video_urls </span><span class="s2">= [{</span><span class="s3">&quot;url&quot;</span><span class="s2">: </span><span class="s3">&quot;https://www.youtube.com/watch?v=&quot; </span><span class="s2">+ </span><span class="s1">item</span><span class="s2">[</span><span class="s3">'id'</span><span class="s2">][</span><span class="s3">'videoId'</span><span class="s2">],</span>
+                   <span class="s3">&quot;description&quot;</span><span class="s2">: </span><span class="s1">item</span><span class="s2">[</span><span class="s3">'snippet'</span><span class="s2">][</span><span class="s3">'description'</span><span class="s2">]} </span><span class="s0">for </span><span class="s1">item </span><span class="s0">in </span><span class="s1">response</span><span class="s2">[</span><span class="s3">'items'</span><span class="s2">] </span><span class="s0">if</span>
+                  <span class="s1">item</span><span class="s2">[</span><span class="s3">'id'</span><span class="s2">][</span><span class="s3">'kind'</span><span class="s2">] == </span><span class="s3">'youtube#video'</span><span class="s2">]</span>
+    <span class="s0">return </span><span class="s1">video_urls</span>
+
+<span class="s0">def </span><span class="s1">get_playlist_videos</span><span class="s2">(</span><span class="s1">playlist_id</span><span class="s2">, </span><span class="s1">api_key</span><span class="s2">):</span>
+    <span class="s1">youtube </span><span class="s2">= </span><span class="s1">build</span><span class="s2">(</span><span class="s3">'youtube'</span><span class="s2">, </span><span class="s3">'v3'</span><span class="s2">, </span><span class="s1">developerKey</span><span class="s2">=</span><span class="s1">api_key</span><span class="s2">)</span>
+    <span class="s1">request </span><span class="s2">= </span><span class="s1">youtube</span><span class="s2">.</span><span class="s1">playlistItems</span><span class="s2">().</span><span class="s1">list</span><span class="s2">(</span>
+        <span class="s1">part</span><span class="s2">=</span><span class="s3">&quot;snippet,contentDetails&quot;</span><span class="s2">,</span>
+        <span class="s1">playlistId</span><span class="s2">=</span><span class="s1">playlist_id</span><span class="s2">,</span>
+        <span class="s1">maxResults</span><span class="s2">=</span><span class="s5">50</span>
+    <span class="s2">)</span>
+    <span class="s1">response </span><span class="s2">= </span><span class="s1">request</span><span class="s2">.</span><span class="s1">execute</span><span class="s2">()</span>
+    <span class="s1">video_urls </span><span class="s2">= [{</span><span class="s3">&quot;url&quot;</span><span class="s2">: </span><span class="s3">&quot;https://www.youtube.com/watch?v=&quot; </span><span class="s2">+ </span><span class="s1">item</span><span class="s2">[</span><span class="s3">'contentDetails'</span><span class="s2">][</span><span class="s3">'videoId'</span><span class="s2">],</span>
+                   <span class="s3">&quot;description&quot;</span><span class="s2">: </span><span class="s1">item</span><span class="s2">[</span><span class="s3">'snippet'</span><span class="s2">][</span><span class="s3">'description'</span><span class="s2">]} </span><span class="s0">for </span><span class="s1">item </span><span class="s0">in </span><span class="s1">response</span><span class="s2">[</span><span class="s3">'items'</span><span class="s2">]]</span>
+    <span class="s0">return </span><span class="s1">video_urls</span>
+
+<span class="s0">def </span><span class="s1">get_video_details</span><span class="s2">(</span><span class="s1">video_id</span><span class="s2">, </span><span class="s1">api_key</span><span class="s2">):</span>
+    <span class="s1">youtube </span><span class="s2">= </span><span class="s1">build</span><span class="s2">(</span><span class="s3">'youtube'</span><span class="s2">, </span><span class="s3">'v3'</span><span class="s2">, </span><span class="s1">developerKey</span><span class="s2">=</span><span class="s1">api_key</span><span class="s2">)</span>
+    <span class="s1">request </span><span class="s2">= </span><span class="s1">youtube</span><span class="s2">.</span><span class="s1">videos</span><span class="s2">().</span><span class="s1">list</span><span class="s2">(</span>
+        <span class="s1">part</span><span class="s2">=</span><span class="s3">&quot;snippet,contentDetails&quot;</span><span class="s2">,</span>
+        <span class="s1">id</span><span class="s2">=</span><span class="s1">video_id</span>
+    <span class="s2">)</span>
+    <span class="s1">response </span><span class="s2">= </span><span class="s1">request</span><span class="s2">.</span><span class="s1">execute</span><span class="s2">()</span>
+    <span class="s0">if </span><span class="s3">'items' </span><span class="s0">in </span><span class="s1">response </span><span class="s0">and </span><span class="s1">len</span><span class="s2">(</span><span class="s1">response</span><span class="s2">[</span><span class="s3">'items'</span><span class="s2">]) &gt; </span><span class="s5">0</span><span class="s2">:</span>
+        <span class="s0">return </span><span class="s1">response</span><span class="s2">[</span><span class="s3">'items'</span><span class="s2">][</span><span class="s5">0</span><span class="s2">][</span><span class="s3">'snippet'</span><span class="s2">], </span><span class="s1">response</span><span class="s2">[</span><span class="s3">'items'</span><span class="s2">][</span><span class="s5">0</span><span class="s2">][</span><span class="s3">'contentDetails'</span><span class="s2">]</span>
+    <span class="s0">return None</span><span class="s2">, </span><span class="s0">None</span>
+
+<span class="s0">def </span><span class="s1">download_video</span><span class="s2">(</span><span class="s1">url</span><span class="s2">, </span><span class="s1">download_path</span><span class="s2">):</span>
+    <span class="s1">yt </span><span class="s2">= </span><span class="s1">YouTube</span><span class="s2">(</span><span class="s1">url</span><span class="s2">)</span>
+    <span class="s1">logging</span><span class="s2">.</span><span class="s1">info</span><span class="s2">(</span><span class="s3">f&quot;Starting download: </span><span class="s0">{</span><span class="s1">yt</span><span class="s2">.</span><span class="s1">title</span><span class="s0">}</span><span class="s3">&quot;</span><span class="s2">)</span>
+    <span class="s1">stream </span><span class="s2">= </span><span class="s1">yt</span><span class="s2">.</span><span class="s1">streams</span><span class="s2">.</span><span class="s1">filter</span><span class="s2">(</span><span class="s1">progressive</span><span class="s2">=</span><span class="s0">True</span><span class="s2">, </span><span class="s1">file_extension</span><span class="s2">=</span><span class="s3">'mp4'</span><span class="s2">).</span><span class="s1">first</span><span class="s2">()</span>
+    <span class="s1">output_file </span><span class="s2">= </span><span class="s1">stream</span><span class="s2">.</span><span class="s1">download</span><span class="s2">(</span><span class="s1">output_path</span><span class="s2">=</span><span class="s1">download_path</span><span class="s2">)</span>
+    <span class="s1">output_mp3 </span><span class="s2">= </span><span class="s1">output_file</span><span class="s2">.</span><span class="s1">replace</span><span class="s2">(</span><span class="s3">'.mp4'</span><span class="s2">, </span><span class="s3">'.mp3'</span><span class="s2">)</span>
+    <span class="s1">ffmpeg</span><span class="s2">.</span><span class="s1">input</span><span class="s2">(</span><span class="s1">output_file</span><span class="s2">).</span><span class="s1">output</span><span class="s2">(</span><span class="s1">output_mp3</span><span class="s2">).</span><span class="s1">run</span><span class="s2">()</span>
+    <span class="s1">os</span><span class="s2">.</span><span class="s1">remove</span><span class="s2">(</span><span class="s1">output_file</span><span class="s2">)</span>
+    <span class="s0">return </span><span class="s1">output_mp3</span>
+
+<span class="s0">def </span><span class="s1">get_mp3_metadata</span><span class="s2">(</span><span class="s1">file_path</span><span class="s2">):</span>
+    <span class="s1">file_size </span><span class="s2">= </span><span class="s1">os</span><span class="s2">.</span><span class="s1">path</span><span class="s2">.</span><span class="s1">getsize</span><span class="s2">(</span><span class="s1">file_path</span><span class="s2">)</span>
+    <span class="s1">pub_date </span><span class="s2">= </span><span class="s1">datetime</span><span class="s2">.</span><span class="s1">now</span><span class="s2">(</span><span class="s1">pytz</span><span class="s2">.</span><span class="s1">utc</span><span class="s2">).</span><span class="s1">strftime</span><span class="s2">(</span><span class="s3">&quot;%a, %d %b %Y %H:%M:%S +0000&quot;</span><span class="s2">)</span>
+    <span class="s1">title </span><span class="s2">= </span><span class="s1">os</span><span class="s2">.</span><span class="s1">path</span><span class="s2">.</span><span class="s1">basename</span><span class="s2">(</span><span class="s1">file_path</span><span class="s2">).</span><span class="s1">replace</span><span class="s2">(</span><span class="s3">'.mp3'</span><span class="s2">, </span><span class="s3">''</span><span class="s2">)</span>
+    <span class="s0">return </span><span class="s2">{</span>
+        <span class="s3">'title'</span><span class="s2">: </span><span class="s1">title</span><span class="s2">,</span>
+        <span class="s3">'description'</span><span class="s2">: </span><span class="s3">f&quot;Episode from </span><span class="s0">{</span><span class="s1">title</span><span class="s0">}</span><span class="s3">&quot;</span><span class="s2">,</span>
+        <span class="s3">'pubDate'</span><span class="s2">: </span><span class="s1">pub_date</span><span class="s2">,</span>
+        <span class="s3">'url'</span><span class="s2">: </span><span class="s1">upload_to_s3</span><span class="s2">(</span><span class="s1">file_path</span><span class="s2">, </span><span class="s1">os</span><span class="s2">.</span><span class="s1">getenv</span><span class="s2">(</span><span class="s3">'AWS_BUCKET_NAME'</span><span class="s2">), </span><span class="s3">f&quot;podcast/</span><span class="s0">{</span><span class="s1">os</span><span class="s2">.</span><span class="s1">path</span><span class="s2">.</span><span class="s1">basename</span><span class="s2">(</span><span class="s1">file_path</span><span class="s2">)</span><span class="s0">}</span><span class="s3">&quot;</span><span class="s2">),</span>
+        <span class="s3">'length'</span><span class="s2">: </span><span class="s1">file_size</span>
+    <span class="s2">}</span>
+
+<span class="s0">def </span><span class="s1">download_podcast</span><span class="s2">(</span><span class="s1">video_urls</span><span class="s2">, </span><span class="s1">min_duration</span><span class="s2">, </span><span class="s1">download_path</span><span class="s2">, </span><span class="s1">bucket_name</span><span class="s2">, </span><span class="s1">channel_or_playlist_id</span><span class="s2">):</span>
+    <span class="s1">uploaded_episodes </span><span class="s2">= []</span>
+    <span class="s0">for </span><span class="s1">video </span><span class="s0">in </span><span class="s1">video_urls</span><span class="s2">:</span>
+        <span class="s0">try</span><span class="s2">:</span>
+            <span class="s1">yt </span><span class="s2">= </span><span class="s1">YouTube</span><span class="s2">(</span><span class="s1">video</span><span class="s2">[</span><span class="s3">&quot;url&quot;</span><span class="s2">])</span>
+            <span class="s1">video_duration </span><span class="s2">= </span><span class="s1">yt</span><span class="s2">.</span><span class="s1">length  </span><span class="s4"># in seconds</span>
+            <span class="s0">if </span><span class="s1">video_duration </span><span class="s0">is None or </span><span class="s1">video_duration </span><span class="s2">&lt; </span><span class="s1">min_duration</span><span class="s2">:</span>
+                <span class="s1">logging</span><span class="s2">.</span><span class="s1">info</span><span class="s2">(</span><span class="s3">f&quot;Skipping video '</span><span class="s0">{</span><span class="s1">yt</span><span class="s2">.</span><span class="s1">title</span><span class="s0">}</span><span class="s3">' as it is shorter than the minimum duration or duration is not available.&quot;</span><span class="s2">)</span>
+                <span class="s0">continue</span>
+
+            <span class="s1">snippet</span><span class="s2">, </span><span class="s1">content_details </span><span class="s2">= </span><span class="s1">get_video_details</span><span class="s2">(</span><span class="s1">yt</span><span class="s2">.</span><span class="s1">video_id</span><span class="s2">, </span><span class="s1">os</span><span class="s2">.</span><span class="s1">getenv</span><span class="s2">(</span><span class="s3">'API_KEY'</span><span class="s2">))</span>
+            <span class="s0">if </span><span class="s1">snippet </span><span class="s0">is None or </span><span class="s1">content_details </span><span class="s0">is None</span><span class="s2">:</span>
+                <span class="s1">logging</span><span class="s2">.</span><span class="s1">info</span><span class="s2">(</span><span class="s3">f&quot;Skipping video </span><span class="s0">{</span><span class="s1">video</span><span class="s2">[</span><span class="s3">'url'</span><span class="s2">]</span><span class="s0">} </span><span class="s3">due to missing details.&quot;</span><span class="s2">)</span>
+                <span class="s0">continue</span>
+
+            <span class="s1">mp3_file </span><span class="s2">= </span><span class="s1">download_video</span><span class="s2">(</span><span class="s1">video</span><span class="s2">[</span><span class="s3">&quot;url&quot;</span><span class="s2">], </span><span class="s1">download_path</span><span class="s2">)</span>
+            <span class="s1">file_metadata </span><span class="s2">= </span><span class="s1">get_mp3_metadata</span><span class="s2">(</span><span class="s1">mp3_file</span><span class="s2">)</span>
+            <span class="s1">logging</span><span class="s2">.</span><span class="s1">info</span><span class="s2">(</span><span class="s3">f&quot;Starting upload: </span><span class="s0">{</span><span class="s1">file_metadata</span><span class="s2">[</span><span class="s3">'title'</span><span class="s2">]</span><span class="s0">}</span><span class="s3">&quot;</span><span class="s2">)</span>
+            <span class="s1">s3_url </span><span class="s2">= </span><span class="s1">upload_to_s3</span><span class="s2">(</span><span class="s1">mp3_file</span><span class="s2">, </span><span class="s1">bucket_name</span><span class="s2">, </span><span class="s3">f&quot;</span><span class="s0">{</span><span class="s1">channel_or_playlist_id</span><span class="s0">}</span><span class="s3">/</span><span class="s0">{</span><span class="s1">os</span><span class="s2">.</span><span class="s1">path</span><span class="s2">.</span><span class="s1">basename</span><span class="s2">(</span><span class="s1">mp3_file</span><span class="s2">)</span><span class="s0">}</span><span class="s3">&quot;</span><span class="s2">)</span>
+            <span class="s1">episode_id </span><span class="s2">= </span><span class="s1">upload_to_buzzsprout</span><span class="s2">(</span><span class="s1">file_metadata</span><span class="s2">[</span><span class="s3">'title'</span><span class="s2">], </span><span class="s1">snippet</span><span class="s2">[</span><span class="s3">'description'</span><span class="s2">], </span><span class="s1">s3_url</span><span class="s2">)</span>
+            <span class="s0">if </span><span class="s1">episode_id</span><span class="s2">:</span>
+                <span class="s1">uploaded_episodes</span><span class="s2">.</span><span class="s1">append</span><span class="s2">({</span><span class="s3">'title'</span><span class="s2">: </span><span class="s1">file_metadata</span><span class="s2">[</span><span class="s3">'title'</span><span class="s2">], </span><span class="s3">'episode_id'</span><span class="s2">: </span><span class="s1">episode_id</span><span class="s2">})</span>
+                <span class="s1">logging</span><span class="s2">.</span><span class="s1">info</span><span class="s2">(</span><span class="s3">f&quot;Deleting local file: </span><span class="s0">{</span><span class="s1">mp3_file</span><span class="s0">}</span><span class="s3">&quot;</span><span class="s2">)</span>
+                <span class="s1">os</span><span class="s2">.</span><span class="s1">remove</span><span class="s2">(</span><span class="s1">mp3_file</span><span class="s2">)  </span><span class="s4"># Delete local file</span>
+            <span class="s0">else</span><span class="s2">:</span>
+                <span class="s1">logging</span><span class="s2">.</span><span class="s1">info</span><span class="s2">(</span><span class="s3">f&quot;Failed to upload episode '</span><span class="s0">{</span><span class="s1">file_metadata</span><span class="s2">[</span><span class="s3">'title'</span><span class="s2">]</span><span class="s0">}</span><span class="s3">' to Buzzsprout.&quot;</span><span class="s2">)</span>
+        <span class="s0">except </span><span class="s1">Exception </span><span class="s0">as </span><span class="s1">e</span><span class="s2">:</span>
+            <span class="s1">logging</span><span class="s2">.</span><span class="s1">info</span><span class="s2">(</span><span class="s3">f&quot;Failed to download video </span><span class="s0">{</span><span class="s1">video</span><span class="s2">[</span><span class="s3">'url'</span><span class="s2">]</span><span class="s0">} </span><span class="s3">due to error: </span><span class="s0">{</span><span class="s1">e</span><span class="s0">}</span><span class="s3">&quot;</span><span class="s2">)</span>
+
+    <span class="s0">return </span><span class="s1">uploaded_episodes</span>
+
+<span class="s2">@</span><span class="s1">celery_app</span><span class="s2">.</span><span class="s1">task</span>
+<span class="s0">def </span><span class="s1">download_channel_podcast</span><span class="s2">(</span><span class="s1">channel_url</span><span class="s2">, </span><span class="s1">min_duration</span><span class="s2">):</span>
+    <span class="s0">with </span><span class="s1">flask_app</span><span class="s2">.</span><span class="s1">app_context</span><span class="s2">():</span>
+        <span class="s0">try</span><span class="s2">:</span>
+            <span class="s1">channel </span><span class="s2">= </span><span class="s1">Channel</span><span class="s2">(</span><span class="s1">channel_url</span><span class="s2">)</span>
+            <span class="s1">channel_name </span><span class="s2">= </span><span class="s1">channel</span><span class="s2">.</span><span class="s1">channel_name</span>
+            <span class="s1">channel_id </span><span class="s2">= </span><span class="s1">channel</span><span class="s2">.</span><span class="s1">channel_id</span>
+            <span class="s1">download_path </span><span class="s2">= </span><span class="s1">os</span><span class="s2">.</span><span class="s1">path</span><span class="s2">.</span><span class="s1">join</span><span class="s2">(</span><span class="s3">&quot;downloaded&quot;</span><span class="s2">, </span><span class="s1">channel_id</span><span class="s2">)</span>
+            <span class="s1">os</span><span class="s2">.</span><span class="s1">makedirs</span><span class="s2">(</span><span class="s1">download_path</span><span class="s2">, </span><span class="s1">exist_ok</span><span class="s2">=</span><span class="s0">True</span><span class="s2">)</span>
+
+            <span class="s1">api_key </span><span class="s2">= </span><span class="s1">os</span><span class="s2">.</span><span class="s1">getenv</span><span class="s2">(</span><span class="s3">'API_KEY'</span><span class="s2">)</span>
+            <span class="s0">if not </span><span class="s1">api_key</span><span class="s2">:</span>
+                <span class="s0">raise </span><span class="s1">ValueError</span><span class="s2">(</span><span class="s3">&quot;No API key provided. Please set the API_KEY environment variable.&quot;</span><span class="s2">)</span>
+
+            <span class="s1">video_urls </span><span class="s2">= </span><span class="s1">get_channel_videos</span><span class="s2">(</span><span class="s1">channel_id</span><span class="s2">, </span><span class="s1">api_key</span><span class="s2">)</span>
+            <span class="s1">logging</span><span class="s2">.</span><span class="s1">info</span><span class="s2">(</span><span class="s3">&quot;Processing started...&quot;</span><span class="s2">)</span>
+            <span class="s1">uploaded_episodes </span><span class="s2">= </span><span class="s1">download_podcast</span><span class="s2">(</span><span class="s1">video_urls</span><span class="s2">, </span><span class="s1">min_duration</span><span class="s2">, </span><span class="s1">download_path</span><span class="s2">, </span><span class="s1">os</span><span class="s2">.</span><span class="s1">getenv</span><span class="s2">(</span><span class="s3">'AWS_BUCKET_NAME'</span><span class="s2">), </span><span class="s1">channel_id</span><span class="s2">)</span>
+            <span class="s1">logging</span><span class="s2">.</span><span class="s1">info</span><span class="s2">(</span><span class="s3">f&quot;Upload complete, </span><span class="s0">{</span><span class="s1">len</span><span class="s2">(</span><span class="s1">uploaded_episodes</span><span class="s2">)</span><span class="s0">} </span><span class="s3">episodes have been uploaded to your Buzzsprout dashboard.&quot;</span><span class="s2">)</span>
+            <span class="s0">return </span><span class="s1">uploaded_episodes</span>
+        <span class="s0">except </span><span class="s1">Exception </span><span class="s0">as </span><span class="s1">e</span><span class="s2">:</span>
+            <span class="s1">logging</span><span class="s2">.</span><span class="s1">error</span><span class="s2">(</span><span class="s3">f&quot;Failed to create podcast: </span><span class="s0">{</span><span class="s1">e</span><span class="s0">}</span><span class="s3">&quot;</span><span class="s2">)</span>
+            <span class="s0">return </span><span class="s2">[]</span>
+
+<span class="s2">@</span><span class="s1">celery_app</span><span class="s2">.</span><span class="s1">task</span>
+<span class="s0">def </span><span class="s1">download_playlist_podcast</span><span class="s2">(</span><span class="s1">playlist_url</span><span class="s2">, </span><span class="s1">min_duration</span><span class="s2">):</span>
+    <span class="s0">with </span><span class="s1">flask_app</span><span class="s2">.</span><span class="s1">app_context</span><span class="s2">():</span>
+        <span class="s0">try</span><span class="s2">:</span>
+            <span class="s1">playlist </span><span class="s2">= </span><span class="s1">Playlist</span><span class="s2">(</span><span class="s1">playlist_url</span><span class="s2">)</span>
+            <span class="s1">playlist_title </span><span class="s2">= </span><span class="s1">playlist</span><span class="s2">.</span><span class="s1">title</span>
+            <span class="s1">playlist_id </span><span class="s2">= </span><span class="s1">playlist</span><span class="s2">.</span><span class="s1">playlist_id</span>
+            <span class="s1">download_path </span><span class="s2">= </span><span class="s1">os</span><span class="s2">.</span><span class="s1">path</span><span class="s2">.</span><span class="s1">join</span><span class="s2">(</span><span class="s3">&quot;downloaded&quot;</span><span class="s2">, </span><span class="s1">playlist_id</span><span class="s2">)</span>
+            <span class="s1">os</span><span class="s2">.</span><span class="s1">makedirs</span><span class="s2">(</span><span class="s1">download_path</span><span class="s2">, </span><span class="s1">exist_ok</span><span class="s2">=</span><span class="s0">True</span><span class="s2">)</span>
+
+            <span class="s1">api_key </span><span class="s2">= </span><span class="s1">os</span><span class="s2">.</span><span class="s1">getenv</span><span class="s2">(</span><span class="s3">'API_KEY'</span><span class="s2">)</span>
+            <span class="s0">if not </span><span class="s1">api_key</span><span class="s2">:</span>
+                <span class="s0">raise </span><span class="s1">ValueError</span><span class="s2">(</span><span class="s3">&quot;No API key provided. Please set the API_KEY environment variable.&quot;</span><span class="s2">)</span>
+
+            <span class="s1">video_urls </span><span class="s2">= </span><span class="s1">get_playlist_videos</span><span class="s2">(</span><span class="s1">playlist_id</span><span class="s2">, </span><span class="s1">api_key</span><span class="s2">)</span>
+            <span class="s1">logging</span><span class="s2">.</span><span class="s1">info</span><span class="s2">(</span><span class="s3">&quot;Processing started...&quot;</span><span class="s2">)</span>
+            <span class="s1">uploaded_episodes </span><span class="s2">= </span><span class="s1">download_podcast</span><span class="s2">(</span><span class="s1">video_urls</span><span class="s2">, </span><span class="s1">min_duration</span><span class="s2">, </span><span class="s1">download_path</span><span class="s2">, </span><span class="s1">os</span><span class="s2">.</span><span class="s1">getenv</span><span class="s2">(</span><span class="s3">'AWS_BUCKET_NAME'</span><span class="s2">), </span><span class="s1">playlist_id</span><span class="s2">)</span>
+            <span class="s1">logging</span><span class="s2">.</span><span class="s1">info</span><span class="s2">(</span><span class="s3">f&quot;Upload complete, </span><span class="s0">{</span><span class="s1">len</span><span class="s2">(</span><span class="s1">uploaded_episodes</span><span class="s2">)</span><span class="s0">} </span><span class="s3">episodes have been uploaded to your Buzzsprout dashboard.&quot;</span><span class="s2">)</span>
+            <span class="s0">return </span><span class="s1">uploaded_episodes</span>
+        <span class="s0">except </span><span class="s1">Exception </span><span class="s0">as </span><span class="s1">e</span><span class="s2">:</span>
+            <span class="s1">logging</span><span class="s2">.</span><span class="s1">error</span><span class="s2">(</span><span class="s3">f&quot;Failed to create podcast: </span><span class="s0">{</span><span class="s1">e</span><span class="s0">}</span><span class="s3">&quot;</span><span class="s2">)</span>
+            <span class="s0">return </span><span class="s2">[]</span>
+</pre>
+</body>
+</html>

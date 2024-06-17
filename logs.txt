@@ -1,0 +1,38 @@
+2024-06-08T14:43:31.967079 - Skipping video 'The ONE Thing You Need to Know Before Year 11 (GCSEs tip)' as it is shorter than the minimum duration or duration is not available.
+2024-06-08T14:43:32.412383 - Skipping video 'How to Pick Your GCSEs (What I Wish I Knew)' as it is shorter than the minimum duration or duration is not available.
+2024-06-08T14:43:32.743426 - Skipping video 'How I got a 9 (A**) in GCSE math' as it is shorter than the minimum duration or duration is not available.
+2024-06-08T14:43:33.078844 - Skipping video 'How I got 9/A* in All Sciences in GCSE' as it is shorter than the minimum duration or duration is not available.
+2024-06-08T14:43:33.391717 - Failed to download video https://www.youtube.com/watch?v=aVviwrM25Zg due to error: int() argument must be a string, a bytes-like object or a real number, not 'NoneType'
+2024-06-08T14:43:33.826810 - Skipping video 'How I Got a 9/A* in Computer Science GCSE' as it is shorter than the minimum duration or duration is not available.
+2024-06-08T14:43:34.283879 - Failed to download video https://www.youtube.com/watch?v=BcrNauCNcak due to error: int() argument must be a string, a bytes-like object or a real number, not 'NoneType'
+2024-06-08T14:43:34.961426 - Downloading video '4 Reasons Why You're Struggling With GCSE SCIENCE'
+2024-06-08T14:43:40.796340 - Uploading video '4 Reasons Why You're Struggling With GCSE SCIENCE'
+2024-06-08T14:43:55.000363 - Episode '4 Reasons Why Youre Struggling With GCSE SCIENCE' uploaded successfully to Buzzsprout with ID 15215310.
+2024-06-08T14:43:55.002329 - Deleting local file: /Users/yousefshawky/PycharmProjects/Youtube-to-podcast/downloaded/PL2E-v4G_Yi-MvSwXGia-AZH34KFOhYLjO/4 Reasons Why Youre Struggling With GCSE SCIENCE.mp3
+2024-06-08T14:43:55.004218 - Processed 1/10 videos.
+2024-06-08T14:43:55.658514 - Downloading video 'The Biggest Mistake I Made in my GCSEs'
+2024-06-08T14:44:03.804576 - Uploading video 'The Biggest Mistake I Made in my GCSEs'
+2024-06-08T14:44:09.874972 - Episode 'The Biggest Mistake I Made in my GCSEs' uploaded successfully to Buzzsprout with ID 15215311.
+2024-06-08T14:44:09.876939 - Deleting local file: /Users/yousefshawky/PycharmProjects/Youtube-to-podcast/downloaded/PL2E-v4G_Yi-MvSwXGia-AZH34KFOhYLjO/The Biggest Mistake I Made in my GCSEs.mp3
+2024-06-08T14:44:09.878473 - Processed 2/10 videos.
+2024-06-08T14:44:10.351180 - Skipping video 'How to Deal With a Bad Exam (GCSE & A Level)' as it is shorter than the minimum duration or duration is not available.
+2024-06-08T14:44:10.352894 - Podcast for playlist GCSE Advice created successfully.
+[2024-06-08 15:10:11] Skipping video 'The ONE Thing You Need to Know Before Year 11 (GCSEs tip)' as it is shorter than the minimum duration or duration is not available.
+[2024-06-08 15:10:12] Skipping video 'How to Pick Your GCSEs (What I Wish I Knew)' as it is shorter than the minimum duration or duration is not available.
+[2024-06-08 15:10:12] Skipping video 'How I got a 9 (A**) in GCSE math' as it is shorter than the minimum duration or duration is not available.
+[2024-06-08 15:10:12] Skipping video 'How I got 9/A* in All Sciences in GCSE' as it is shorter than the minimum duration or duration is not available.
+[2024-06-08 15:10:13] Failed to download video https://www.youtube.com/watch?v=aVviwrM25Zg due to error: int() argument must be a string, a bytes-like object or a real number, not 'NoneType'
+[2024-06-08 15:10:13] Skipping video 'How I Got a 9/A* in Computer Science GCSE' as it is shorter than the minimum duration or duration is not available.
+[2024-06-08 15:10:14] Failed to download video https://www.youtube.com/watch?v=BcrNauCNcak due to error: int() argument must be a string, a bytes-like object or a real number, not 'NoneType'
+[2024-06-08 15:10:14] Downloading video '4 Reasons Why You're Struggling With GCSE SCIENCE'
+[2024-06-08 15:10:20] Uploading video '4 Reasons Why You're Struggling With GCSE SCIENCE' to S3
+[2024-06-08 15:10:27] Episode '4 Reasons Why Youre Struggling With GCSE SCIENCE' uploaded successfully to Buzzsprout.
+[2024-06-08 15:10:27] Deleting local file: /Users/yousefshawky/PycharmProjects/Youtube-to-podcast/downloaded/PL2E-v4G_Yi-MvSwXGia-AZH34KFOhYLjO/4 Reasons Why Youre Struggling With GCSE SCIENCE.mp3
+[2024-06-08 15:10:27] Processed videos: 1/10
+[2024-06-08 15:10:27] Downloading video 'The Biggest Mistake I Made in my GCSEs'
+[2024-06-08 15:10:32] Uploading video 'The Biggest Mistake I Made in my GCSEs' to S3
+[2024-06-08 15:10:38] Episode 'The Biggest Mistake I Made in my GCSEs' uploaded successfully to Buzzsprout.
+[2024-06-08 15:10:38] Deleting local file: /Users/yousefshawky/PycharmProjects/Youtube-to-podcast/downloaded/PL2E-v4G_Yi-MvSwXGia-AZH34KFOhYLjO/The Biggest Mistake I Made in my GCSEs.mp3
+[2024-06-08 15:10:38] Processed videos: 2/10
+[2024-06-08 15:10:38] Skipping video 'How to Deal With a Bad Exam (GCSE & A Level)' as it is shorter than the minimum duration or duration is not available.
+[2024-06-08 15:10:38] Podcast for playlist GCSE Advice created successfully.
