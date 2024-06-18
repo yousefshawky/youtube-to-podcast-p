@@ -2648,3 +2648,97 @@ file_cache is only supported with oauth2client<4.0.0
 Resolved URL: https://www.youtube.com/channel/UCE6xj743OtZ1OiqCYdRbJzQ
 Created .env file at: user_envs/2376034.env
 Task 54bd2818-1ea9-4f1d-85b8-97584ad9a7f0 started
+Error in start-conversion: 'buzzsprout_api_key'
+Starting Flask app
+Accessed index route
+Received data: {'url': 'https://www.youtube.com/@shiggs33', 'buzzsprout_api_key': '0bcf2d5812357dbfd96442d7444c7875', 'buzzsprout_podcast_id': '2376034', 'min_duration_minutes': '6', 'min_duration_seconds': '30', 'max_duration_minutes': 0, 'max_duration_seconds': 0, 'title_filter': ''}
+Received start-conversion request: URL=https://www.youtube.com/@shiggs33, min_duration=390, max_duration=0, title_filter=, buzzsprout_api_key=0bcf2d5812357dbfd96442d7444c7875, buzzsprout_podcast_id=2376034
+file_cache is only supported with oauth2client<4.0.0
+Resolved URL: https://www.youtube.com/channel/UCE6xj743OtZ1OiqCYdRbJzQ
+Created .env file at: user_envs/2376034.env
+Task 993e14db-aa0d-4a1b-9c82-9c71bba3fa30 started
+Flask app running
+Starting Flask app
+Accessed index route
+Received data: {'url': 'https://www.youtube.com/@shiggs33', 'buzzsprout_api_key': '0bcf2d5812357dbfd96442d7444c7875', 'buzzsprout_podcast_id': '2376034', 'min_duration_minutes': '6', 'min_duration_seconds': '30', 'max_duration_minutes': 0, 'max_duration_seconds': 0, 'title_filter': 'sleep'}
+Received start-conversion request: URL=https://www.youtube.com/@shiggs33, min_duration=390, max_duration=0, title_filter=sleep, buzzsprout_api_key=0bcf2d5812357dbfd96442d7444c7875, buzzsprout_podcast_id=2376034
+file_cache is only supported with oauth2client<4.0.0
+Resolved URL: https://www.youtube.com/channel/UCE6xj743OtZ1OiqCYdRbJzQ
+Created .env file at: user_envs/2376034.env
+Task ac35087a-4092-4dd0-88ad-f499fbfb81f0 started
+Flask app running
+Starting Flask app
+Flask app running
+Starting Flask app
+Accessed index route
+Received data: {'url': 'https://www.youtube.com/@shiggs33', 'buzzsprout_api_key': '0bcf2d5812357dbfd96442d7444c7875', 'buzzsprout_podcast_id': '2376034', 'min_duration_minutes': '6', 'min_duration_seconds': '30', 'max_duration_minutes': 0, 'max_duration_seconds': 0, 'title_filter': 'sleep'}
+Received start-conversion request: URL=https://www.youtube.com/@shiggs33, min_duration=390, max_duration=0, title_filter=sleep, buzzsprout_api_key=0bcf2d5812357dbfd96442d7444c7875, buzzsprout_podcast_id=2376034
+file_cache is only supported with oauth2client<4.0.0
+Resolved URL: https://www.youtube.com/channel/UCE6xj743OtZ1OiqCYdRbJzQ
+Created .env file at: user_envs/2376034.env
+Task 108c86fa-c1bd-4c6b-ac5d-513c597d9056 started
+All active tasks have been terminated.
+Flask app running
+Starting Flask app
+Accessed index route
+Received data: {'url': 'https://www.youtube.com/@shiggs33', 'buzzsprout_api_key': '0bcf2d5812357dbfd96442d7444c7875', 'buzzsprout_podcast_id': '2376034', 'min_duration_minutes': 0, 'min_duration_seconds': 0, 'max_duration_minutes': 0, 'max_duration_seconds': 0, 'title_filter': 'sleep'}
+Received start-conversion request: URL=https://www.youtube.com/@shiggs33, min_duration=0, max_duration=0, title_filter=sleep, buzzsprout_api_key=0bcf2d5812357dbfd96442d7444c7875, buzzsprout_podcast_id=2376034
+file_cache is only supported with oauth2client<4.0.0
+Resolved URL: https://www.youtube.com/channel/UCE6xj743OtZ1OiqCYdRbJzQ
+Created .env file at: user_envs/2376034.env
+Task 1835772e-2c12-4e7c-be0e-b60e6f30768a started
+All active tasks have been terminated.
+Received data: {'url': 'https://www.youtube.com/@shiggs33', 'buzzsprout_api_key': '0bcf2d5812357dbfd96442d7444c7875', 'buzzsprout_podcast_id': '2376034', 'min_duration_minutes': 0, 'min_duration_seconds': 0, 'max_duration_minutes': 0, 'max_duration_seconds': 0, 'title_filter': 'sleep'}
+Received start-conversion request: URL=https://www.youtube.com/@shiggs33, min_duration=0, max_duration=0, title_filter=sleep, buzzsprout_api_key=0bcf2d5812357dbfd96442d7444c7875, buzzsprout_podcast_id=2376034
+file_cache is only supported with oauth2client<4.0.0
+Resolved URL: https://www.youtube.com/channel/UCE6xj743OtZ1OiqCYdRbJzQ
+Created .env file at: user_envs/2376034.env
+Task 43f82689-4822-4e19-b325-280e32c0ee09 started
+All active tasks have been terminated.
+Flask app running
+Starting Flask app
+Accessed index route
+Received data: {'url': 'https://www.youtube.com/@shiggs33', 'buzzsprout_api_key': '0bcf2d5812357dbfd96442d7444c7875', 'buzzsprout_podcast_id': '2376034', 'min_duration_minutes': '6', 'min_duration_seconds': '30', 'max_duration_minutes': 0, 'max_duration_seconds': 0, 'title_filter': 'sleep'}
+Received start-conversion request: URL=https://www.youtube.com/@shiggs33, min_duration=390, max_duration=0, title_filter=sleep, buzzsprout_api_key=0bcf2d5812357dbfd96442d7444c7875, buzzsprout_podcast_id=2376034
+file_cache is only supported with oauth2client<4.0.0
+Resolved URL: https://www.youtube.com/channel/UCE6xj743OtZ1OiqCYdRbJzQ
+Created .env file at: user_envs/2376034.env
+Task f2eba03c-03c7-4bce-8843-ce6aa0c8ed9c started
+All active tasks have been terminated.
+Flask app running
+Starting Flask app
+Accessed index route
+Received data: {'url': 'https://www.youtube.com/@shiggs33', 'buzzsprout_api_key': '0bcf2d5812357dbfd96442d7444c7875', 'buzzsprout_podcast_id': '2376034', 'min_duration_minutes': '6', 'min_duration_seconds': '30', 'max_duration_minutes': 0, 'max_duration_seconds': 0, 'title_filter': 'sleep'}
+Received start-conversion request: URL=https://www.youtube.com/@shiggs33, min_duration=390, max_duration=0, title_filter=sleep, buzzsprout_api_key=0bcf2d5812357dbfd96442d7444c7875, buzzsprout_podcast_id=2376034
+file_cache is only supported with oauth2client<4.0.0
+Resolved URL: https://www.youtube.com/channel/UCE6xj743OtZ1OiqCYdRbJzQ
+Created .env file at: user_envs/2376034.env
+Task 44f61e42-7662-4f4b-bf21-3d6c93c93d45 started
+Flask app running
+Starting Flask app
+Accessed index route
+Received data: {'url': 'https://www.youtube.com/@shiggs33', 'buzzsprout_api_key': '0bcf2d5812357dbfd96442d7444c7875', 'buzzsprout_podcast_id': '2376034', 'min_duration_minutes': '6', 'min_duration_seconds': '30', 'max_duration_minutes': 0, 'max_duration_seconds': 0, 'title_filter': 'sleep'}
+Received start-conversion request: URL=https://www.youtube.com/@shiggs33, min_duration=390, max_duration=0, title_filter=sleep, buzzsprout_api_key=0bcf2d5812357dbfd96442d7444c7875, buzzsprout_podcast_id=2376034
+file_cache is only supported with oauth2client<4.0.0
+Resolved URL: https://www.youtube.com/channel/UCE6xj743OtZ1OiqCYdRbJzQ
+Created .env file at: user_envs/2376034.env
+Task 1dffe460-abc9-41e3-a934-3e806d5ebcd7 started
+Flask app running
+Starting Flask app
+Accessed index route
+Received data: {'url': 'https://www.youtube.com/@shiggs33', 'buzzsprout_api_key': '0bcf2d5812357dbfd96442d7444c7875', 'buzzsprout_podcast_id': '2376034', 'min_duration_minutes': '6', 'min_duration_seconds': '30', 'max_duration_minutes': 0, 'max_duration_seconds': 0, 'title_filter': 'sleep'}
+Received start-conversion request: URL=https://www.youtube.com/@shiggs33, min_duration=390, max_duration=0, title_filter=sleep, buzzsprout_api_key=0bcf2d5812357dbfd96442d7444c7875, buzzsprout_podcast_id=2376034
+file_cache is only supported with oauth2client<4.0.0
+Resolved URL: https://www.youtube.com/channel/UCE6xj743OtZ1OiqCYdRbJzQ
+Created .env file at: user_envs/2376034.env
+Task 82415737-0c3e-45e2-b9fc-420034c1b92d started
+Flask app running
+Starting Flask app
+Accessed index route
+Received data: {'url': 'https://www.youtube.com/@shiggs33', 'buzzsprout_api_key': '0bcf2d5812357dbfd96442d7444c7875', 'buzzsprout_podcast_id': '2376034', 'min_duration_minutes': '6', 'min_duration_seconds': '30', 'max_duration_minutes': 0, 'max_duration_seconds': 0, 'title_filter': 'sleep'}
+Received start-conversion request: URL=https://www.youtube.com/@shiggs33, min_duration=390, max_duration=0, title_filter=sleep, buzzsprout_api_key=0bcf2d5812357dbfd96442d7444c7875, buzzsprout_podcast_id=2376034
+file_cache is only supported with oauth2client<4.0.0
+Resolved URL: https://www.youtube.com/channel/UCE6xj743OtZ1OiqCYdRbJzQ
+Created .env file at: user_envs/2376034.env
+Task afcfe971-dc0c-482d-a1c9-dac3462502fc started
+All active tasks have been terminated.

@@ -6,7 +6,7 @@
     <title>YouTube to Podcast Converter</title>
     <link rel="stylesheet" href="static/styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap" rel="stylesheet">
-    <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
+    <link rel="icon" type="image/png" href="static/favicon.png">
 </head>
 <body>
     <div class="container">
@@ -55,7 +55,8 @@
                 </div>
             </div>
             <br>
-            <button type="submit">Start Conversion</button>
+            <button type="submit" id="start-conversion-btn">Start Conversion</button>
+            <button type="button" id="stop-conversion-btn" style="display:none;">Stop Conversion</button>
         </form>
     </div>
 

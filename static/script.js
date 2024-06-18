@@ -1,5 +1,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('converter-form');
+    const startButton = document.getElementById('start-conversion-btn');
+    const stopButton = document.getElementById('stop-conversion-btn');
 
     form.addEventListener('submit', function(event) {
         event.preventDefault();
@@ -15,8 +17,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const requestBody = {
             url: url,
-            buzzsproutApiKey: buzzsproutApiKey,
-            buzzsproutPodcastId: buzzsproutPodcastId,
+            buzzsprout_api_key: buzzsproutApiKey, // Ensure the key is correctly named
+            buzzsprout_podcast_id: buzzsproutPodcastId, // Ensure the key is correctly named
             min_duration_minutes: minDurationMinutes || 0,
             min_duration_seconds: minDurationSeconds || 0,
             max_duration_minutes: maxDurationMinutes || 0,
@@ -35,6 +37,26 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             if (data.status === 'started') {
                 alert('Conversion started');
+                stopButton.style.display = 'block';
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    });
+
+    stopButton.addEventListener('click', function() {
+        fetch('/stop-conversion', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'stopped') {
+                alert('Conversion stopped');
+                stopButton.style.display = 'none';
             } else {
                 alert('Error: ' + data.message);
             }

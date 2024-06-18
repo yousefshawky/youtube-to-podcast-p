@@ -84,6 +84,15 @@ button:hover {
     background-color: #00bfff;
 }
 
+button#stop-conversion-btn {
+    background-color: #ff4d4d;
+    margin-top: 10px;
+}
+
+button#stop-conversion-btn:hover {
+    background-color: #ff1a1a;
+}
+
 .filter-option {
     display: flex;
     align-items: center;
