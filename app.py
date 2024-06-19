@@ -1,23 +1,23 @@
+import eventlet
+eventlet.monkey_patch()
+
 import os
-from flask import Flask, request, jsonify, render_template, redirect, url_for
-from flask_socketio import SocketIO
+from flask import Flask, request, jsonify, render_template, redirect
+from flask_socketio import SocketIO, emit
 from celery import Celery
 from tasks import download_channel_podcast, download_playlist_podcast, resolve_channel_url
 from dotenv import load_dotenv
 import logging
+
 
 # Initialize logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 app = Flask(__name__, static_folder='static', template_folder='templates')
 app.config['SECRET_KEY'] = 'secret!'
-socketio = SocketIO(app, message_queue='redis://localhost:6379/0')
 
-@app.before_request
-def before_request():
-    if not request.is_secure:
-        url = request.url.replace("http://", "https://", 1)
-        return redirect(url, code=301)
+# Configure Redis as the message queue for SocketIO
+socketio = SocketIO(app, message_queue='redis://localhost:6379/0', async_mode='eventlet')
 
 def make_celery(app):
     celery = Celery(app.import_name, broker=app.config['CELERY_BROKER_URL'])
@@ -34,7 +34,6 @@ def make_celery(app):
     celery.Task = ContextTask
     return celery
 
-
 app.config.update(
     CELERY_BROKER_URL='redis://localhost:6379/0',
     CELERY_RESULT_BACKEND='redis://localhost:6379/0'
@@ -42,13 +41,10 @@ app.config.update(
 
 celery = make_celery(app)
 
-
 @app.route('/')
 def index():
     logging.info("Accessed index route")
     return render_template('index.html')
-
-
 
 @app.route('/start-conversion', methods=['POST'])
 def start_conversion():
@@ -68,7 +64,6 @@ def start_conversion():
         logging.info(
             f"Received start-conversion request: URL={url}, min_duration={min_duration}, max_duration={max_duration}, title_filter={title_filter}, buzzsprout_api_key={buzzsprout_api_key}, buzzsprout_podcast_id={buzzsprout_podcast_id}")
 
-        # Resolve the URL to ensure proper format
         resolved_url = resolve_channel_url(url, os.getenv('API_KEY'))
         logging.info(f"Resolved URL: {resolved_url}")
 
@@ -76,7 +71,6 @@ def start_conversion():
             logging.error("Invalid URL format")
             return jsonify({"status": "error", "message": "Invalid URL format"}), 400
 
-        # Create a unique .env file for the user
         env_content = f"""
 API_KEY={os.getenv('API_KEY')}
 AWS_ACCESS_KEY_ID={os.getenv('AWS_ACCESS_KEY_ID')}
@@ -112,7 +106,6 @@ AWS_BUCKET_NAME={os.getenv('AWS_BUCKET_NAME')}
         logging.error(f"Error in start-conversion: {e}")
         return jsonify({"status": "error", "message": str(e)}), 500
 
-
 @app.route('/stop-conversion', methods=['POST'])
 def stop_conversion():
     try:
@@ -137,6 +130,6 @@ def stop_conversion():
 if __name__ == '__main__':
     logging.info("Starting Flask app")
     print("Starting Flask app")
-    socketio.run(app)
+    socketio.run(app, host='0.0.0.0', port=5001)
     logging.info("Flask app running")
     print("Flask app running")

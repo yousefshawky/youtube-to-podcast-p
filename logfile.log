@@ -2742,3 +2742,168 @@ Resolved URL: https://www.youtube.com/channel/UCE6xj743OtZ1OiqCYdRbJzQ
 Created .env file at: user_envs/2376034.env
 Task afcfe971-dc0c-482d-a1c9-dac3462502fc started
 All active tasks have been terminated.
+Flask app running
+Starting Flask app
+Flask app running
+Starting Flask app
+Flask app running
+Starting Flask app
+Flask app running
+Starting Flask app
+Flask app running
+Starting Flask app
+Flask app running
+Starting Flask app
+Flask app running
+Starting Flask app
+Flask app running
+Starting Flask app
+Accessed index route
+Flask app running
+Starting Flask app
+Accessed index route
+Flask app running
+Starting Flask app
+Accessed index route
+Flask app running
+Starting Flask app
+Accessed index route
+Flask app running
+Starting Flask app
+Accessed index route
+Accessed index route
+Accessed index route
+Received data: {'url': 'https://www.youtube.com/@shiggs33', 'buzzsprout_api_key': '0bcf2d5812357dbfd96442d7444c7875', 'buzzsprout_podcast_id': '2376034', 'min_duration_minutes': '6', 'min_duration_seconds': '30', 'max_duration_minutes': 0, 'max_duration_seconds': 0, 'title_filter': 'sleep'}
+Received start-conversion request: URL=https://www.youtube.com/@shiggs33, min_duration=390, max_duration=0, title_filter=sleep, buzzsprout_api_key=0bcf2d5812357dbfd96442d7444c7875, buzzsprout_podcast_id=2376034
+file_cache is only supported with oauth2client<4.0.0
+Resolved URL: https://www.youtube.com/channel/UCE6xj743OtZ1OiqCYdRbJzQ
+Created .env file at: user_envs/2376034.env
+Task 99b4a5c3-35d7-420d-948a-3455998451a1 started
+All active tasks have been terminated.
+Received data: {'url': 'https://www.youtube.com/@shiggs33', 'buzzsprout_api_key': '0bcf2d5812357dbfd96442d7444c7875', 'buzzsprout_podcast_id': '2376034', 'min_duration_minutes': '6', 'min_duration_seconds': '30', 'max_duration_minutes': '6', 'max_duration_seconds': '30', 'title_filter': 'sleep'}
+Received start-conversion request: URL=https://www.youtube.com/@shiggs33, min_duration=390, max_duration=390, title_filter=sleep, buzzsprout_api_key=0bcf2d5812357dbfd96442d7444c7875, buzzsprout_podcast_id=2376034
+file_cache is only supported with oauth2client<4.0.0
+Resolved URL: https://www.youtube.com/channel/UCE6xj743OtZ1OiqCYdRbJzQ
+Created .env file at: user_envs/2376034.env
+Task e5571c33-bc14-4287-9c31-2cee04e35664 started
+Received data: {'url': 'https://www.youtube.com/@shiggs33', 'buzzsprout_api_key': '0bcf2d5812357dbfd96442d7444c7875', 'buzzsprout_podcast_id': '2376034', 'min_duration_minutes': '6', 'min_duration_seconds': '30', 'max_duration_minutes': '6', 'max_duration_seconds': '30', 'title_filter': 'sleep'}
+Received start-conversion request: URL=https://www.youtube.com/@shiggs33, min_duration=390, max_duration=390, title_filter=sleep, buzzsprout_api_key=0bcf2d5812357dbfd96442d7444c7875, buzzsprout_podcast_id=2376034
+file_cache is only supported with oauth2client<4.0.0
+Resolved URL: https://www.youtube.com/channel/UCE6xj743OtZ1OiqCYdRbJzQ
+Created .env file at: user_envs/2376034.env
+Task f5b18ecb-c9cb-4940-9843-174eb11fb5b9 started
+Received data: {'url': 'https://www.youtube.com/@shiggs33', 'buzzsprout_api_key': '0bcf2d5812357dbfd96442d7444c7875', 'buzzsprout_podcast_id': '2376034', 'min_duration_minutes': '6', 'min_duration_seconds': '30', 'max_duration_minutes': '6', 'max_duration_seconds': '30', 'title_filter': 'Sleep'}
+Received start-conversion request: URL=https://www.youtube.com/@shiggs33, min_duration=390, max_duration=390, title_filter=Sleep, buzzsprout_api_key=0bcf2d5812357dbfd96442d7444c7875, buzzsprout_podcast_id=2376034
+file_cache is only supported with oauth2client<4.0.0
+Resolved URL: https://www.youtube.com/channel/UCE6xj743OtZ1OiqCYdRbJzQ
+Created .env file at: user_envs/2376034.env
+Task 4a08ec45-05c4-43d3-b59b-2d04d3da0a8d started
+Flask app running
+Starting Flask app
+Accessed index route
+Received data: {'url': 'https://www.youtube.com/@shiggs33', 'buzzsprout_api_key': '0bcf2d5812357dbfd96442d7444c7875', 'buzzsprout_podcast_id': '2376034', 'min_duration_minutes': '6', 'min_duration_seconds': '30', 'max_duration_minutes': 0, 'max_duration_seconds': 0, 'title_filter': 'sleep'}
+Received start-conversion request: URL=https://www.youtube.com/@shiggs33, min_duration=390, max_duration=0, title_filter=sleep, buzzsprout_api_key=0bcf2d5812357dbfd96442d7444c7875, buzzsprout_podcast_id=2376034
+file_cache is only supported with oauth2client<4.0.0
+Resolved URL: https://www.youtube.com/channel/UCE6xj743OtZ1OiqCYdRbJzQ
+Created .env file at: user_envs/2376034.env
+Task e5f23e2a-810e-4e12-9155-749d9d47f200 started
+Flask app running
+Starting Flask app
+Accessed index route
+connect handler error
+Traceback (most recent call last):
+  File "/Users/yousefshawky/PycharmProjects/Youtube-to-podcast/newenv/lib/python3.12/site-packages/engineio/server.py", line 434, in run_handler
+    return self.handlers[event](*args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/yousefshawky/PycharmProjects/Youtube-to-podcast/newenv/lib/python3.12/site-packages/socketio/server.py", line 623, in _handle_eio_connect
+    self.manager.initialize()
+  File "/Users/yousefshawky/PycharmProjects/Youtube-to-podcast/newenv/lib/python3.12/site-packages/socketio/redis_manager.py", line 64, in initialize
+    raise RuntimeError(
+RuntimeError: Redis requires a monkey patched socket library to work with eventlet
+Flask app running
+Starting Flask app
+Flask app running
+Starting Flask app
+connect handler error
+Traceback (most recent call last):
+  File "/Users/yousefshawky/PycharmProjects/Youtube-to-podcast/newenv/lib/python3.12/site-packages/engineio/server.py", line 434, in run_handler
+    return self.handlers[event](*args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/yousefshawky/PycharmProjects/Youtube-to-podcast/newenv/lib/python3.12/site-packages/socketio/server.py", line 623, in _handle_eio_connect
+    self.manager.initialize()
+  File "/Users/yousefshawky/PycharmProjects/Youtube-to-podcast/newenv/lib/python3.12/site-packages/socketio/redis_manager.py", line 64, in initialize
+    raise RuntimeError(
+RuntimeError: Redis requires a monkey patched socket library to work with eventlet
+Flask app running
+Starting Flask app
+ * Restarting with stat
+Starting Flask app
+ * Debugger is active!
+ * Debugger PIN: 145-173-239
+Flask app running
+Flask app running
+Starting Flask app
+ * Restarting with stat
+Starting Flask app
+ * Debugger is active!
+ * Debugger PIN: 145-173-239
+Flask app running
+Flask app running
+Starting Flask app
+ * Restarting with stat
+Starting Flask app
+ * Debugger is active!
+ * Debugger PIN: 145-173-239
+Accessed index route
+connect handler error
+Traceback (most recent call last):
+  File "/Users/yousefshawky/PycharmProjects/Youtube-to-podcast/newenv/lib/python3.12/site-packages/engineio/server.py", line 434, in run_handler
+    return self.handlers[event](*args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/yousefshawky/PycharmProjects/Youtube-to-podcast/newenv/lib/python3.12/site-packages/socketio/server.py", line 623, in _handle_eio_connect
+    self.manager.initialize()
+  File "/Users/yousefshawky/PycharmProjects/Youtube-to-podcast/newenv/lib/python3.12/site-packages/socketio/redis_manager.py", line 64, in initialize
+    raise RuntimeError(
+RuntimeError: Redis requires a monkey patched socket library to work with eventlet
+ * Detected change in '/Users/yousefshawky/PycharmProjects/Youtube-to-podcast/app.py', reloading
+ * Restarting with stat
+Starting Flask app
+Flask app running
+Flask app running
+Starting Flask app
+Flask app running
+Starting Flask app
+Accessed index route
+Accessed index route
+Received data: {'url': 'https://www.youtube.com/@shiggs33', 'buzzsprout_api_key': '0bcf2d5812357dbfd96442d7444c7875', 'buzzsprout_podcast_id': '2376034', 'min_duration_minutes': '6', 'min_duration_seconds': '30', 'max_duration_minutes': 0, 'max_duration_seconds': 0, 'title_filter': 'sleep'}
+Received start-conversion request: URL=https://www.youtube.com/@shiggs33, min_duration=390, max_duration=0, title_filter=sleep, buzzsprout_api_key=0bcf2d5812357dbfd96442d7444c7875, buzzsprout_podcast_id=2376034
+file_cache is only supported with oauth2client<4.0.0
+Resolved URL: https://www.youtube.com/channel/UCE6xj743OtZ1OiqCYdRbJzQ
+Created .env file at: user_envs/2376034.env
+Task 6c7f51f3-3cad-4eab-8354-a70e44aa99f8 started
+Flask app running
+Starting Flask app
+Accessed index route
+Received data: {'url': 'https://www.youtube.com/@shiggs33', 'buzzsprout_api_key': '0bcf2d5812357dbfd96442d7444c7875', 'buzzsprout_podcast_id': '2376034', 'min_duration_minutes': '6', 'min_duration_seconds': '30', 'max_duration_minutes': 0, 'max_duration_seconds': 0, 'title_filter': 'sleep'}
+Received start-conversion request: URL=https://www.youtube.com/@shiggs33, min_duration=390, max_duration=0, title_filter=sleep, buzzsprout_api_key=0bcf2d5812357dbfd96442d7444c7875, buzzsprout_podcast_id=2376034
+file_cache is only supported with oauth2client<4.0.0
+Resolved URL: https://www.youtube.com/channel/UCE6xj743OtZ1OiqCYdRbJzQ
+Created .env file at: user_envs/2376034.env
+Task dd6a0f57-9bf0-477c-b089-7e220770914d started
+All active tasks have been terminated.
+Flask app running
+Starting Flask app
+Accessed index route
+Received data: {'url': 'https://www.youtube.com/@shiggs33', 'buzzsprout_api_key': '0bcf2d5812357dbfd96442d7444c7875', 'buzzsprout_podcast_id': '2371749', 'min_duration_minutes': '6', 'min_duration_seconds': '30', 'max_duration_minutes': 0, 'max_duration_seconds': 0, 'title_filter': 'sleep'}
+Received start-conversion request: URL=https://www.youtube.com/@shiggs33, min_duration=390, max_duration=0, title_filter=sleep, buzzsprout_api_key=0bcf2d5812357dbfd96442d7444c7875, buzzsprout_podcast_id=2371749
+file_cache is only supported with oauth2client<4.0.0
+Resolved URL: https://www.youtube.com/channel/UCE6xj743OtZ1OiqCYdRbJzQ
+Created .env file at: user_envs/2371749.env
+Task 3cfd924f-7e92-4c58-aa96-7f148632879e started
+All active tasks have been terminated.
+Received data: {'url': 'https://www.youtube.com/@shiggs33', 'buzzsprout_api_key': '0bcf2d5812357dbfd96442d7444c7875', 'buzzsprout_podcast_id': '2371749', 'min_duration_minutes': '6', 'min_duration_seconds': '30', 'max_duration_minutes': 0, 'max_duration_seconds': 0, 'title_filter': 'sleep'}
+Received start-conversion request: URL=https://www.youtube.com/@shiggs33, min_duration=390, max_duration=0, title_filter=sleep, buzzsprout_api_key=0bcf2d5812357dbfd96442d7444c7875, buzzsprout_podcast_id=2371749
+file_cache is only supported with oauth2client<4.0.0
+Resolved URL: https://www.youtube.com/channel/UCE6xj743OtZ1OiqCYdRbJzQ
+Created .env file at: user_envs/2371749.env
+Task 8be95ee2-4f65-43a3-a0a5-a36dd09e4449 started

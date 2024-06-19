@@ -2,6 +2,21 @@ document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('converter-form');
     const startButton = document.getElementById('start-conversion-btn');
     const stopButton = document.getElementById('stop-conversion-btn');
+    const statusUpdatesDiv = document.getElementById('status-updates');
+
+    // Socket.IO connection
+    const socket = io();
+
+    socket.on('connect', function() {
+        console.log('Connected to server');
+    });
+
+    socket.on('status_update', function(msg) {
+        console.log('Status update:', msg);
+        const statusMessage = document.createElement('p');
+        statusMessage.textContent = msg.status;
+        statusUpdatesDiv.appendChild(statusMessage);
+    });
 
     form.addEventListener('submit', function(event) {
         event.preventDefault();
@@ -17,8 +32,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const requestBody = {
             url: url,
-            buzzsprout_api_key: buzzsproutApiKey, // Ensure the key is correctly named
-            buzzsprout_podcast_id: buzzsproutPodcastId, // Ensure the key is correctly named
+            buzzsprout_api_key: buzzsproutApiKey,
+            buzzsprout_podcast_id: buzzsproutPodcastId,
             min_duration_minutes: minDurationMinutes || 0,
             min_duration_seconds: minDurationSeconds || 0,
             max_duration_minutes: maxDurationMinutes || 0,
@@ -33,7 +48,12 @@ document.addEventListener('DOMContentLoaded', function() {
             },
             body: JSON.stringify(requestBody)
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
         .then(data => {
             if (data.status === 'started') {
                 alert('Conversion started');
@@ -42,7 +62,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 alert('Error: ' + data.message);
             }
         })
-        .catch(error => console.error('Error:', error));
+        .catch(error => {
+            console.error('Error:', error);
+            alert(`Error: ${error.message}`);
+        });
     });
 
     stopButton.addEventListener('click', function() {
@@ -52,7 +75,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 'Content-Type': 'application/json'
             }
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
         .then(data => {
             if (data.status === 'stopped') {
                 alert('Conversion stopped');
@@ -61,7 +89,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 alert('Error: ' + data.message);
             }
         })
-        .catch(error => console.error('Error:', error));
+        .catch(error => {
+            console.error('Error:', error);
+            alert(`Error: ${error.message}`);
+        });
     });
 
     const filterMinDurationCheckbox = document.getElementById('filter-min-duration');
@@ -95,4 +126,3 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
-

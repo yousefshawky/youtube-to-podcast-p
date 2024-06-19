@@ -80,17 +80,9 @@ button {
     font-size: 16px;
 }
 
-button:hover {
-    background-color: #00bfff;
-}
-
 button#stop-conversion-btn {
     background-color: #ff4d4d;
     margin-top: 10px;
-}
-
-button#stop-conversion-btn:hover {
-    background-color: #ff1a1a;
 }
 
 .filter-option {
@@ -103,8 +95,7 @@ button#stop-conversion-btn:hover {
     margin-left: 10px;
 }
 
-#status {
+#status-updates {
     margin-top: 20px;
     text-align: left;
 }
-

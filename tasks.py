@@ -6,13 +6,12 @@ import ssl
 import urllib.request
 from pytube import YouTube, Channel, Playlist, request
 import boto3
-from datetime import datetime
-import pytz
 from googleapiclient.discovery import build
 from celery import Celery
 from dotenv import load_dotenv
 import logging
 import redis
+from flask_socketio import SocketIO, emit
 
 load_dotenv()
 
@@ -26,6 +25,8 @@ ssl_context = ssl.create_default_context(cafile=certifi.where())
 
 # Setup logging
 logging.basicConfig(filename='logfile.log', level=logging.INFO, format='%(message)s')
+
+socketio = SocketIO(message_queue='redis://localhost:6379/0')
 
 # Custom get function for pytube
 def custom_get(url, headers=None, timeout=None):
@@ -149,6 +150,7 @@ def get_playlist_videos(playlist_id, api_key):
 def emit_status(message):
     logging.info(f"Emitting status: {message}")
     redis_client.publish('status_updates', message)
+    socketio.emit('status_update', {'status': message}, namespace='/')
 
 def resolve_channel_url(url, api_key):
     youtube = build('youtube', 'v3', developerKey=api_key)
@@ -217,7 +219,6 @@ def download_channel_podcast(self, url, min_duration=None, max_duration=None, ti
         os.makedirs(download_path, exist_ok=True)
 
         video_urls = get_channel_videos(channel_id, api_key)
-        emit_status('Download started for channel')
         logging.info("Processing started...")
         uploaded_episodes = []
 
@@ -228,43 +229,35 @@ def download_channel_podcast(self, url, min_duration=None, max_duration=None, ti
                 min_duration = int(min_duration) if min_duration else None
                 max_duration = int(max_duration) if max_duration else None
 
-                logging.info(f"Processing video: {yt.title}, Duration: {video_duration}s")
-
-                if min_duration is not None:
-                    logging.info(f"Minimum duration filter: {min_duration}s, Video duration: {video_duration}s")
-                if max_duration is not None:
-                    logging.info(f"Maximum duration filter: {max_duration}s, Video duration: {video_duration}s")
-                if title_filter:
-                    logging.info(f"Title filter: '{title_filter}', Video title: '{yt.title}'")
-
-                if ((min_duration is not None and (video_duration is None or video_duration < min_duration)) or
-                        (max_duration is not None and video_duration > max_duration) or
-                        (title_filter and title_filter.lower() not in yt.title.lower())):
-                    logging.info(f"Skipping video '{yt.title}' as it does not meet the filter criteria.")
-                    emit_status(f"Skipping video '{yt.title}' as it does not meet the filter criteria.")
+                if min_duration is not None and video_duration < min_duration:
+                    logging.info(f"Skipping video '{yt.title}' as it does not meet the minimum duration filter.")
                     continue
 
-                logging.info(f"Downloading video: {yt.title}")
-                emit_status(f"Downloading video: {yt.title}")
-                yt.streams.filter(only_audio=True).first().download(output_path=download_path,
-                                                                    filename=f'{sanitize_filename(yt.title)}.mp3')
+                if max_duration is not None and video_duration > max_duration:
+                    logging.info(f"Skipping video '{yt.title}' as it does not meet the maximum duration filter.")
+                    continue
+
+                if title_filter and title_filter.lower() not in yt.title.lower():
+                    logging.info(f"Skipping video '{yt.title}' as it does not meet the title filter.")
+                    continue
+
+                yt.streams.filter(only_audio=True).first().download(output_path=download_path, filename=f'{sanitize_filename(yt.title)}.mp3')
                 file_path = os.path.join(download_path, f'{sanitize_filename(yt.title)}.mp3')
 
-                logging.info(f"Uploading video: {yt.title}")
-                emit_status(f"Uploading video: {yt.title}")
-                s3_url = upload_to_s3(file_path, os.getenv('AWS_BUCKET_NAME'),
-                                      f'podcasts/{sanitize_filename(yt.title)}.mp3')
+                s3_url = upload_to_s3(file_path, os.getenv('AWS_BUCKET_NAME'), f'podcasts/{sanitize_filename(yt.title)}.mp3')
                 buzzsprout_id = upload_to_buzzsprout(yt.title, yt.description, s3_url, env_path)
-                logging.info(f"Video {yt.title} uploaded with ID {buzzsprout_id}")
-                emit_status(f"Video {yt.title} uploaded with ID {buzzsprout_id}")
-                uploaded_episodes.append({'title': yt.title, 'episode_id': buzzsprout_id})
+                if buzzsprout_id:
+                    logging.info(f"Video {yt.title} uploaded with ID {buzzsprout_id}")
+                    emit_status(f"Video {yt.title} uploaded with ID {buzzsprout_id}")
+                    uploaded_episodes.append({'title': yt.title, 'episode_id': buzzsprout_id})
                 os.remove(file_path)
             except Exception as e:
                 logging.info(f"Failed to download video {video['url']} due to error: {e}")
-                emit_status(f"Failed to download video {video['url']} due to error: {e}")
 
-        logging.info(f"Upload complete, {len(uploaded_episodes)} episodes have been uploaded to your Buzzsprout dashboard.")
-        emit_status(f"Upload complete, {len(uploaded_episodes)} episodes have been uploaded to your Buzzsprout dashboard.")
+        if len(uploaded_episodes) == 1:
+            emit_status(f"Upload complete, {len(uploaded_episodes)} episode has been uploaded to your Buzzsprout dashboard.")
+        else:
+            emit_status(f"Upload complete, {len(uploaded_episodes)} episodes have been uploaded to your Buzzsprout dashboard.")
         return uploaded_episodes
     except Exception as e:
         logging.info(f"Error processing channel: {e}")
@@ -291,7 +284,6 @@ def download_playlist_podcast(self, url, min_duration=None, max_duration=None, t
         os.makedirs(download_path, exist_ok=True)
 
         video_urls = get_playlist_videos(playlist_id, api_key)
-        emit_status('Download started for playlist')
         logging.info("Processing started...")
         uploaded_episodes = []
 
@@ -302,49 +294,40 @@ def download_playlist_podcast(self, url, min_duration=None, max_duration=None, t
                 min_duration = int(min_duration) if min_duration else None
                 max_duration = int(max_duration) if max_duration else None
 
-                logging.info(f"Processing video: {yt.title}, Duration: {video_duration}s")
-
-                if min_duration is not None:
-                    logging.info(f"Minimum duration filter: {min_duration}s, Video duration: {video_duration}s")
-                if max_duration is not None:
-                    logging.info(f"Maximum duration filter: {max_duration}s, Video duration: {video_duration}s")
-                if title_filter:
-                    logging.info(f"Title filter: '{title_filter}', Video title: '{yt.title}'")
-
-                if ((min_duration is not None and (video_duration is None or video_duration < min_duration)) or
-                        (max_duration is not None and video_duration > max_duration) or
-                        (title_filter and title_filter.lower() not in yt.title.lower())):
-                    logging.info(f"Skipping video '{yt.title}' as it does not meet the filter criteria.")
-                    emit_status(f"Skipping video '{yt.title}' as it does not meet the filter criteria.")
+                if min_duration is not None and video_duration < min_duration:
+                    logging.info(f"Skipping video '{yt.title}' as it does not meet the minimum duration filter.")
                     continue
 
-                logging.info(f"Downloading video: {yt.title}")
-                emit_status(f"Downloading video: {yt.title}")
-                yt.streams.filter(only_audio=True).first().download(output_path=download_path,
-                                                                    filename=f'{sanitize_filename(yt.title)}.mp3')
+                if max_duration is not None and video_duration > max_duration:
+                    logging.info(f"Skipping video '{yt.title}' as it does not meet the maximum duration filter.")
+                    continue
+
+                if title_filter and title_filter.lower() not in yt.title.lower():
+                    logging.info(f"Skipping video '{yt.title}' as it does not meet the title filter.")
+                    continue
+
+                yt.streams.filter(only_audio=True).first().download(output_path=download_path, filename=f'{sanitize_filename(yt.title)}.mp3')
                 file_path = os.path.join(download_path, f'{sanitize_filename(yt.title)}.mp3')
 
-                logging.info(f"Uploading video: {yt.title}")
-                emit_status(f"Uploading video: {yt.title}")
-                s3_url = upload_to_s3(file_path, os.getenv('AWS_BUCKET_NAME'),
-                                      f'podcasts/{sanitize_filename(yt.title)}.mp3')
+                s3_url = upload_to_s3(file_path, os.getenv('AWS_BUCKET_NAME'), f'podcasts/{sanitize_filename(yt.title)}.mp3')
                 buzzsprout_id = upload_to_buzzsprout(yt.title, yt.description, s3_url, env_path)
-                logging.info(f"Video {yt.title} uploaded with ID {buzzsprout_id}")
-                emit_status(f"Video {yt.title} uploaded with ID {buzzsprout_id}")
-                uploaded_episodes.append({'title': yt.title, 'episode_id': buzzsprout_id})
+                if buzzsprout_id:
+                    logging.info(f"Video titled: '{yt.title}' uploaded with ID {buzzsprout_id}")
+                    emit_status(f"Video titled: '{yt.title}' uploaded with ID {buzzsprout_id}")
+                    uploaded_episodes.append({'title': yt.title, 'episode_id': buzzsprout_id})
                 os.remove(file_path)
             except Exception as e:
                 logging.info(f"Failed to download video {video['url']} due to error: {e}")
-                emit_status(f"Failed to download video {video['url']} due to error: {e}")
 
-        logging.info(f"Upload complete, {len(uploaded_episodes)} episodes have been uploaded to your Buzzsprout dashboard.")
-        emit_status(f"Upload complete, {len(uploaded_episodes)} episodes have been uploaded to your Buzzsprout dashboard.")
+        if len(uploaded_episodes) == 1:
+            emit_status(f"Upload complete, {len(uploaded_episodes)} episode has been uploaded to your Buzzsprout dashboard.")
+        else:
+            emit_status(f"Upload complete, {len(uploaded_episodes)} episodes have been uploaded to your Buzzsprout dashboard.")
         return uploaded_episodes
     except Exception as e:
         logging.info(f"Error processing playlist: {e}")
         emit_status(f"Error processing playlist: {e}")
         return []
-
 
 def sanitize_filename(filename):
     return "".join([c if c.isalnum() else "_" for c in filename])
