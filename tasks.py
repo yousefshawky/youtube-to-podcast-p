@@ -345,5 +345,6 @@ def download_playlist_podcast(self, url, min_duration=None, max_duration=None, t
         emit_status(f"Error processing playlist: {e}")
         return []
 
+
 def sanitize_filename(filename):
     return "".join([c if c.isalnum() else "_" for c in filename])
